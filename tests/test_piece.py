@@ -1,6 +1,6 @@
 import unittest
 import sys
-sys.path.append('../core')
+sys.path.append('core')
 
 import piece
 board  = piece.Board()
