@@ -3,7 +3,9 @@ import sys
 sys.path.append('core')
 
 import piece
+
 board = piece.Board()
+game = piece.Game()
 
 class KingTest(unittest.TestCase):
     def setUp(self):
@@ -14,11 +16,10 @@ class KingTest(unittest.TestCase):
 
 class GameTest(unittest.TestCase):
     def setUp(self):
-        self.game = piece.Game()
-        self.white_king = self.game.board[4].piece
+        self.white_king = game.board[4].piece
 
     def test_king_location(self):
-        self.assertIs(self.white_king,
+        self.assertIsInstance(self.white_king,
             piece.CHESS_SET['King'])
 
     #def test_king_color(self):
@@ -26,10 +27,13 @@ class GameTest(unittest.TestCase):
 
 class BoardTest(unittest.TestCase):
     def setUp(self):
-        self.y = 64
+        pass
 
     def test_init(self):
-        self.assertEqual(self.y, len(board.squares))
+        self.assertEqual(64, len(board.squares))
+
+    def test_opp_square(self):
+        self.assertEqual('c2', board.opp_square('c7'))
 
     @unittest.skip('not implemented')
     def test_square_colors(self):

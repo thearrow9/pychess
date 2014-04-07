@@ -1,11 +1,9 @@
 import settings
 
 class Piece:
-    #    self.label = label
-    #    self.points = points
-    #    self.directions = directions
-    #    self.color = color
-    #    self.moves = 0
+    def __init__(self, color):
+        self.color = color
+        self.moves = 0
 
     def is_alias(piece):
         return self.color == piece.color
@@ -34,6 +32,10 @@ class Board():
         return settings.Y_LABELS.index(notation[0]) + \
             (int(notation[1]) - 1) * settings.BOARD_SIZE
 
+    def opp_square(self, notation):
+        return '{}{}'.format(notation[0], str(
+            settings.BOARD_SIZE + 1 - int(notation[1])))
+
     def __getitem__(self, index):
         return self.squares[index]
 
@@ -49,10 +51,10 @@ KING_MOVE = ROOK_MOVE + BISHOP_MOVE
 
 PIECES = {'King': dict(label='K', points=1000, long_move=False,
                     moves=[KING_MOVE], capture_moves=[],
-                    special_moves=[], start_pos = ['e1', 'e8']),
+                    special_moves=[], start_pos = ['e1']),
           'Queen': dict(label='Q', points=9, long_move=True,
                     moves=[], capture_moves=[], special_moves=[],
-                    start_pos = ['d1', 'd8'])
+                    start_pos = ['d1'])
          }
 
 CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
@@ -65,8 +67,10 @@ class Game:
 
     def reset(self):
         for piece in CHESS_SET.values():
-            for square in piece.start_pos:
-                self.board.place(piece, square)
+            for notation in piece.start_pos:
+                self.board.place(piece(0), notation)
+                self.board.place(piece(1), \
+                    self.board.opp_square(notation))
 
     def move(square1, square2):
         self.board[square2].piece = self.board[square1].piece
