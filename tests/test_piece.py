@@ -6,24 +6,49 @@ import piece
 
 board = piece.Board()
 game = piece.Game()
+king = piece.CHESS_SET['King']
 
 class KingTest(unittest.TestCase):
     def setUp(self):
-        self.king = piece.CHESS_SET['King']
+        pass
 
     def test_points(self):
-        self.assertEqual(1000, self.king.points)
+        self.assertEqual(1000, king.points)
+
+    def test_long_move(self):
+        self.assertFalse(king.long_move)
+
+    def test_start_pos(self):
+        self.assertEqual('e1', king.start_pos[0])
+
+    def test_count_start_pos(self):
+        self.assertEqual(1, len(king.start_pos))
+
+    def test_label(self):
+        self.assertEqual('K', king.label)
 
 class GameTest(unittest.TestCase):
-    def setUp(self):
-        self.white_king = game.board[4].piece
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.white_king = game.board['e1'].piece
 
-    def test_king_location(self):
+    def test_white_king_location(self):
+        self.assertEqual(
+            'e1', game.select_first('K', 0).piece.location)
+
+    def test_white_king_instance(self):
         self.assertIsInstance(self.white_king,
             piece.CHESS_SET['King'])
 
-    #def test_king_color(self):
-    #   self.assertEqual(self.white_king.color, 0)
+    def test_white_king_color(self):
+       self.assertEqual(self.white_king.color, 0)
+
+    def test_count_select_all(self):
+        self.assertEqual(1, len(game.select_all('Q', 1)))
+
+    def test_select_first(self):
+        self.assertIsInstance(
+            game.select_first('K', 1).piece, piece.CHESS_SET['King'])
 
 class BoardTest(unittest.TestCase):
     def setUp(self):
@@ -35,12 +60,11 @@ class BoardTest(unittest.TestCase):
     def test_opp_square(self):
         self.assertEqual('c2', board.opp_square('c7'))
 
-    @unittest.skip('not implemented')
     def test_square_colors(self):
-        pass#self.assertEqual(0, board.squares[8].color)
+        self.assertEqual(0, board.squares[8].color)
 
     def test_square_indexing(self):
-        self.assertIs(board[2], board.squares[2])
+        self.assertIs(board['c1'], board.squares[2])
 
     def test_square_name(self):
         self.assertEqual('b1', str(board.squares[1]))

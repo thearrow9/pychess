@@ -1,12 +1,16 @@
 import settings
 
 class Piece:
-    def __init__(self, color):
+    def __init__(self, color, location):
         self.color = color
         self.moves = 0
+        self.location = location
 
     def is_alias(piece):
         return self.color == piece.color
+
+CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
+    for cls, options in settings.PIECES.items())
 
 class Square:
     def __init__(self, index):
@@ -23,7 +27,8 @@ class Square:
 
 class Board():
     def __init__(self):
-        self.squares = [Square(i) for i in range(settings.BOARD_SIZE ** 2)]
+        self.squares = [Square(i) for i in range(
+            settings.BOARD_SIZE ** 2)]
 
     def place(self, piece, notation):
         self[self.notation_to_id(notation)] = piece
@@ -36,41 +41,36 @@ class Board():
         return '{}{}'.format(notation[0], str(
             settings.BOARD_SIZE + 1 - int(notation[1])))
 
-    def __getitem__(self, index):
-        return self.squares[index]
+    def __getitem__(self, notation):
+        return self.squares[self.notation_to_id(notation)]
 
     def __setitem__(self, index, item):
         self.squares[index].piece = item
 
-ROOK_MOVE = [1, 8]
-
-BISHOP_MOVE = [7, 9]
-
-KING_MOVE = ROOK_MOVE + BISHOP_MOVE
-
-
-PIECES = {'King': dict(label='K', points=1000, long_move=False,
-                    moves=[KING_MOVE], capture_moves=[],
-                    special_moves=[], start_pos = ['e1']),
-          'Queen': dict(label='Q', points=9, long_move=True,
-                    moves=[], capture_moves=[], special_moves=[],
-                    start_pos = ['d1'])
-         }
-
-CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
-    for cls, options in PIECES.items())
 
 class Game:
     def __init__(self):
         self.board = Board()
         self.reset()
 
+    def select_all(self, label, color):
+        return list(self.__find(label, color))
+
+    def select_first(self, label, color):
+        return next(self.__find(label, color))
+
+    def __find(self, label, color):
+        return filter(
+            lambda x: x.is_occupied() and x.piece.label == label \
+                and x.piece.color == color, self.board.squares)
+
     def reset(self):
         for piece in CHESS_SET.values():
             for notation in piece.start_pos:
-                self.board.place(piece(0), notation)
-                self.board.place(piece(1), \
-                    self.board.opp_square(notation))
+                opp_piece_notation = self.board.opp_square(notation)
+                self.board.place(piece(0, notation), notation)
+                self.board.place(piece(1, opp_piece_notation), \
+                    opp_piece_notation)
 
     def move(square1, square2):
         self.board[square2].piece = self.board[square1].piece
