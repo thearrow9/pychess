@@ -27,6 +27,28 @@ class KingTest(unittest.TestCase):
     def test_label(self):
         self.assertEqual('King', king.label)
 
+
+class NotationIter(unittest.TestCase):
+    def test_left_iter(self):
+        self.assertEqual(['d', 'c', 'b', 'a'],
+            [cols for cols in piece.NotationIter.left('e4')])
+
+    def test_up_iter(self):
+        self.assertEqual(list(range(2, 9)),
+            [rows for rows in piece.NotationIter.up('c1')])
+
+    def test_down_iter(self):
+        self.assertEqual(list(range(6, 0, -1)),
+            [rows for rows in piece.NotationIter.down('c7')])
+
+    def test_right_iter(self):
+        self.assertEqual(['f', 'g', 'h'],
+            [cols for cols in piece.NotationIter.right('e6')])
+
+    def test_empty_iter(self):
+        self.assertEqual([],
+            [cols for cols in piece.NotationIter.right('h2')])
+
 class GameTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -34,7 +56,7 @@ class GameTest(unittest.TestCase):
 
     def test_white_king_location(self):
         self.assertEqual(
-            'e1', game.get_first('K', 0).piece.location)
+            'e1', game.first_piece(['K'], 0).piece.location)
 
     def test_white_king_instance(self):
         self.assertIsInstance(self.white_king, king)
@@ -42,24 +64,36 @@ class GameTest(unittest.TestCase):
     def test_white_king_color(self):
         self.assertEqual(self.white_king.color, 0)
 
-    def test_count_get_all_by(self):
-        self.assertEqual(1, len(game.get_all_by('Q', 1)))
+    def test_count_pieces_by(self):
+        self.assertEqual(1, len(game.pieces_by(['Q'], 1)))
 
-    def test_piece_in_play(self):
-        self.assertEqual(32, len(game.get_all_in_play()))
+    def test_pieces_in_play(self):
+        self.assertEqual(32, len(game.pieces_in_play()))
 
     def test_get_first(self):
-        self.assertIsInstance(game.get_first('K', 1).piece, king)
+        self.assertIsInstance(game.first_piece(['K'], 1).piece, king)
 
+    def test_to_move(self):
+        self.assertEqual(0, game.to_move)
+
+class ValidationTest(unittest.TestCase):
     def test_valid_fen(self):
         self.assertTrue(
-            game.is_valid_fen(piece.settings.START_POS_FEN))
+            piece.Validation.is_fen(piece.settings.START_POS_FEN))
 
     def test_invalid_fen(self):
         self.assertFalse(
-            game.is_valid_fen(
-                'rnbqkbnr/pp1ppppp/8/2p5/4P3/PPPP1PPP/RNBQKBNR\
+            piece.Validation.is_fen(
+                'rnbqkbnr/pp1ppppp/8/2p5/4P3/PPPP1PPP/RNBQKBNR \
                     w KQkq c6 0 2'))
+
+    def test_three_kings_fen(self):
+        self.assertFalse(piece.Validation.correct_pieces(
+            'rnbqkbnr/pppkpppp/8/8/8/8/PPPPPPPP/RNBQKBNR'))
+
+    def test_nine_white_pawns_fen(self):
+        self.assertFalse(piece.Validation.correct_pieces(
+            'rnbqkbnr/pp1ppppp/8/2p5/4PP2/PPPP1PPP/RNBQKBNR'))
 
 class BoardTest(unittest.TestCase):
     def setUp(self):

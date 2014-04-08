@@ -62,24 +62,66 @@ class Board():
     def __setitem__(self, notation, item):
         self.squares[self.str_to_index(notation)].piece = item
 
-class Game:
+class MoveRules:
     def __init__(self):
         self.board = Board()
+
+    def pawn_moves(pawn):
+        moves = []
+        direction = 1 if pawn.color == 0 else -1
+
+
+class NotationIter:
+    @classmethod
+    def up(self, notation):
+        return self.vertical(notation, settings.BOARD_SIZE + 1)
+
+    @classmethod
+    def down(self, notation):
+        return self.vertical(notation, 0, -1)
+
+    @classmethod
+    def vertical(self, notation, end_row, step=1):
+        for row in range(int(notation[1]) + step, end_row, step):
+            yield row
+
+    @classmethod
+    def horizontal(self, notation, end_col, step=1):
+        for col in range(ord(notation[0]) + step, ord(end_col) + step, step):
+            yield chr(col)
+
+    @classmethod
+    def left(self, notation):
+        return self.horizontal(notation, 'a', -1)
+
+    @classmethod
+    def right(self, notation):
+        return self.horizontal(notation, 'h')
+
+class Game(MoveRules):
+    def __init__(self):
+        super().__init__()
         self.reset()
 
-    def get_all_in_play(self):
-        return [x for x in self.board.squares \
+    def get_moves(self, piece):
+        return
+
+    def pieces_by_color(self, color):
+        return self.__find(['K', 'Q', 'R', 'B', 'N', 'P'], color)
+
+    def pieces_in_play(self):
+        return [x.piece for x in self.board.squares \
             if x.is_occupied() and x.piece.in_play]
 
-    def get_all_by(self, char, color):
+    def pieces_by(self, char, color):
         return list(self.__find(char, color))
 
-    def get_first(self, char, color):
+    def first_piece(self, char, color):
         return next(self.__find(char, color))
 
     def __find(self, char, color):
         return filter(lambda x: x.is_occupied() and \
-            x.piece.char == char and x.piece.color == color,
+            x.piece.char in char and x.piece.color == color,
                 self.board.squares)
 
     def reset(self):
@@ -87,7 +129,7 @@ class Game:
 
     def parse_fen(self, fen):
     #raise Error if invalid fen notation
-        start_pos, self.to_move, self.possible_castle, \
+        start_pos, to_move, self.possible_castle, \
             self.en_passant, self.since_capture, self.moves = fen.split(' ')
         i = 0
         for char in ''.join(start_pos.split('/')[::-1]):
@@ -98,10 +140,39 @@ class Game:
                     CHESS_SET[char.upper()], int(char.islower()), i)
                 i += 1
 
-    def is_valid_fen(self, fen):
-        return bool(re.match(
-            '^({0}\/){{7}}{0} [wb] K?Q?k?q? (-|[a-z][36]) \d+ \d+'.\
-                format('[rbnqkpRBNQKP1-8]{1,8}'), fen))
+        self.to_move = 0 if to_move == 'w' else 1
+
+    def __switch_side(self):
+        self.to_move = (self.to_move + 1) % 2
+
+
+    def go_vertical(self, notation):
+
+        """docstring for fname"""
+        pass
+
     #def move(square1, square2):
     #    self.board[square2].piece = self.board[square1].piece
     #    self.board[square1] = None
+
+
+class Validation:
+    @classmethod
+    def is_fen(self, fen):
+        code, *args = fen.split(' ')
+        return bool(re.match(
+            '^({0}\/){{7}}{0} [wb] K?Q?k?q? (-|[a-z][36]) \d+ \d+'. \
+                format('[rbnqkpRBNQKP1-8]{1,8}'), fen)) \
+                    and self.correct_pieces(code)
+
+    @classmethod
+    def correct_pieces(self, code):
+        rules = {'K': [1, 2], 'P': [1, 9]}
+        for char, rule in rules.items():
+            if code.count(char) not in range(*rule) \
+                or code.count(char.lower()) not in range(*rule):
+                return False
+        return True
+
+
+
