@@ -1,11 +1,11 @@
 BOARD_SIZE = 8
 Y_LABELS = 'abcdefgh'
 
-ROOK_MOVE = [1, 8]
+ROOK_MOVE = {'left', 'right', 'up', 'down'}
 
-BISHOP_MOVE = [7, 9]
+BISHOP_MOVE = {}
 
-KING_MOVE = ROOK_MOVE + BISHOP_MOVE
+KING_MOVE = ROOK_MOVE
 
 START_POS_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 

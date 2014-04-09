@@ -28,26 +28,36 @@ class KingTest(unittest.TestCase):
         self.assertEqual('King', king.label)
 
 
-class NotationIter(unittest.TestCase):
-    def test_left_iter(self):
-        self.assertEqual(['d', 'c', 'b', 'a'],
-            [cols for cols in piece.NotationIter.left('e4')])
+class MoveRulesTest(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.game = piece.Game()
+        #build Kh2, Rh1, kf2, ra1
+        self.game.parse_fen('8/8/8/8/8/8/5k1K/r6R w - 5 55')
 
-    def test_up_iter(self):
-        self.assertEqual(list(range(2, 9)),
-            [rows for rows in piece.NotationIter.up('c1')])
+    def test_pieces_in_play(self):
+        self.assertEqual(4, len(self.game.pieces_in_play()))
 
-    def test_down_iter(self):
-        self.assertEqual(list(range(6, 0, -1)),
-            [rows for rows in piece.NotationIter.down('c7')])
+    def test_left_moves(self):
+        self.assertEqual({'g1', 'f1', 'e1', 'd1', 'c1', 'b1', 'a1'},
+            self.game.left('h1'))
 
-    def test_right_iter(self):
-        self.assertEqual(['f', 'g', 'h'],
-            [cols for cols in piece.NotationIter.right('e6')])
+    def test_up_moves(self):
+        self.assertEqual({'f3', 'f4', 'f5', 'f6', 'f7', 'f8'},
+            self.game.up('f2'))
+
+    def test_down_moves(self):
+        self.assertEqual({'f1'}, self.game.down('f2'))
+
+    def test_right_moves(self):
+        self.assertEqual({'g2', 'h2'}, self.game.right('f2'))
 
     def test_empty_iter(self):
-        self.assertEqual([],
-            [cols for cols in piece.NotationIter.right('h2')])
+        self.assertEqual(set(), self.game.down('a1'))
+
+    def test_alias_on_way(self):
+        self.assertEqual(set(), self.game.down('h2'))
+
 
 class GameTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
@@ -56,7 +66,7 @@ class GameTest(unittest.TestCase):
 
     def test_white_king_location(self):
         self.assertEqual(
-            'e1', game.first_piece(['K'], 0).piece.location)
+            'e1', game.first_piece(['K'], 0).location)
 
     def test_white_king_instance(self):
         self.assertIsInstance(self.white_king, king)
@@ -71,10 +81,22 @@ class GameTest(unittest.TestCase):
         self.assertEqual(32, len(game.pieces_in_play()))
 
     def test_get_first(self):
-        self.assertIsInstance(game.first_piece(['K'], 1).piece, king)
+        self.assertIsInstance(game.first_piece(['K'], 1), king)
 
     def test_to_move(self):
         self.assertEqual(0, game.to_move)
+
+
+#class MoveRulesTest(unittest.TestCase):
+#    def setUp(self):
+#        self.game = piece.Game()
+#        #init Kh2, Rh1, kf2
+#        self.game.parse_fen('')
+#
+#    def test_rook_moves(self):
+#        self.assertEqual({'a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1'},
+#            set(self.game.rook_moves(self.game.board['h1'].piece)))
+#
 
 class ValidationTest(unittest.TestCase):
     def test_valid_fen(self):
@@ -95,10 +117,8 @@ class ValidationTest(unittest.TestCase):
         self.assertFalse(piece.Validation.correct_pieces(
             'rnbqkbnr/pp1ppppp/8/2p5/4PP2/PPPP1PPP/RNBQKBNR'))
 
-class BoardTest(unittest.TestCase):
-    def setUp(self):
-        pass
 
+class BoardTest(unittest.TestCase):
     def test_init(self):
         self.assertEqual(64, len(board.squares))
 
@@ -119,6 +139,7 @@ class BoardTest(unittest.TestCase):
 
     def test_str_to_index(self):
         self.assertEqual(board.str_to_index('e1'), 4)
+
 
 if __name__ == '__main__':
     unittest.main()
