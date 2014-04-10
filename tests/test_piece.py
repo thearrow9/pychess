@@ -28,7 +28,7 @@ class KingTest(unittest.TestCase):
         self.assertEqual('King', king.label)
 
 
-class MoveRulesTest(unittest.TestCase):
+class MoveRuleTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game = piece.Game()
@@ -52,17 +52,21 @@ class MoveRulesTest(unittest.TestCase):
     def test_right_moves(self):
         self.assertEqual({'g2', 'h2'}, self.game.right('f2'))
 
-    def test_empty_iter(self):
+    def test_empty_moves(self):
         self.assertEqual(set(), self.game.down('a1'))
 
     def test_alias_on_way(self):
         self.assertEqual(set(), self.game.down('h2'))
 
+    def test_top_left_moves(self):
+        self.assertEqual({'e3', 'd4', 'c5', 'b6', 'a7'},
+            self.game.top_left('f2'))
+
 
 class GameTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.white_king = game.board['e1'].piece
+        self.white_king = game.piece_on('e1')
 
     def test_white_king_location(self):
         self.assertEqual(
@@ -87,16 +91,31 @@ class GameTest(unittest.TestCase):
         self.assertEqual(0, game.to_move)
 
 
-#class MoveRulesTest(unittest.TestCase):
-#    def setUp(self):
-#        self.game = piece.Game()
-#        #init Kh2, Rh1, kf2
-#        self.game.parse_fen('')
-#
-#    def test_rook_moves(self):
-#        self.assertEqual({'a1', 'b1', 'c1', 'd1', 'e1', 'f1', 'g1'},
-#            set(self.game.rook_moves(self.game.board['h1'].piece)))
-#
+class MoveIterTest(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.obj = piece.MoveIter()
+        self.iter1 = self.obj.col_iter('d6', 1)
+        self.iter2 = self.obj.row_iter('d6', -1)
+
+    def test_col_iter(self):
+        self.assertEqual(['c', 'b', 'a'], \
+            [x for x in self.obj.col_iter('d4', -1)])
+
+    def test_row_iter(self):
+        self.assertEqual(['3', '4', '5', '6', '7', '8'], \
+            [x for x in self.obj.row_iter('d2', 1)])
+
+    def test_diagonal_gen(self):
+        self.assertEqual(['e5', 'f4', 'g3', 'h2'],
+            [x for x in self.obj.diagonal_gen(
+                self.iter1, self.iter2)])
+
+
+
+class SamplePositionTest(unittest.TestCase):
+    def test_rook_moves(self):
+        pass
 
 class ValidationTest(unittest.TestCase):
     def test_valid_fen(self):

@@ -64,45 +64,74 @@ class Board():
     def __setitem__(self, notation, item):
         self.squares[self.str_to_index(notation)].piece = item
 
+class MoveIter:
+    def top_left(self, notation):
+        moves = set()
+
+    def col_iter(self, notation, step):
+        end_val = settings.FIRST_ORD - 1 if step < 0 \
+            else settings.LAST_ORD + 1
+        return iter(chr(x) for x in range(
+            ord(notation[0]) + step, end_val, step))
+
+    def row_iter(self, notation, step):
+        end_val = settings.BOARD_SIZE + 1 if step > 0 else 0
+        return iter(str(x) for x in range(
+            int(notation[1]) + step, end_val, step))
+
+    def diagonal_gen(self, iter1, iter2):
+        for x in iter1: yield x + next(iter2)
 
 
-class MoveRules:
+class MoveRule(MoveIter):
     def __init__(self):
         self.board = Board()
 
-    def pawn_moves(self, pawn):
+    def bishop_moves(self, notation):
         moves = []
         direction = 1 if pawn.color == 0 else -1
 
-    def rook_moves(self, rook):
-        location = rook.location
-        return []
 
-    def rook_moves(self, notation, f, end_val, index=0, step=1):
+
+
+    def piece_on(self, notation):
+        return self.board[notation].piece
+
+    def rook_moves(self, iterator, notation, step=1):
         moves = set()
-        for item in range(f(notation[index]) + step, f(end_val) + step, step):
-            square = notation[0] + str(item) if index else chr(item) + notation[1]
-
-            if self.board[square].is_occupied():
-                if self.board[notation].piece.is_alias(self.board[square].piece):
-                    return moves
-                return moves | {square}
+        for item in iterator(notation, step):
+            square = item + notation[1] if item.islower() \
+                else notation[0] + item
+            is_end = self.__piece_on_way(self.piece_on(notation), square)
+            if is_end: return moves | is_end[0]
             moves.add(square)
         return moves
 
+    def __piece_on_way(self, piece, square):
+        if self.board[square].is_occupied():
+            if piece.is_alias(self.piece_on(square)):
+                return [set()]
+            return [{square}]
+        return False
+
     def left(self, notation):
-        return self.rook_moves(notation, ord, 'a', 0, -1)
+        return self.rook_moves(self.col_iter, notation, -1)
 
     def right(self, notation):
-        return self.rook_moves(notation, ord, 'h')
+        return self.rook_moves(self.col_iter, notation)
 
     def up(self, notation):
-        return self.rook_moves(notation, int, settings.BOARD_SIZE, 1)
+        return self.rook_moves(self.row_iter, notation)
 
     def down(self, notation):
-        return self.rook_moves(notation, int, 1, 1, -1)
+        return self.rook_moves(self.row_iter, notation, -1)
 
-class Game(MoveRules):
+    def top_left(self, notation):
+        return {x for x in self.diagonal_gen(
+            self.col_iter(notation, -1), self.row_iter(notation, 1))}
+
+
+class Game(MoveRule):
     def __init__(self, fen=settings.START_POS_FEN):
         super().__init__()
         self.parse_fen(fen)
@@ -132,6 +161,8 @@ class Game(MoveRules):
         for square in filter(lambda x: x.is_occupied(), self.board.squares):
             self.board[str(square)].piece.location = \
                 self.board[str(square)] = None
+
+
 
     def parse_fen(self, fen):
     #raise Error if invalid fen notation
@@ -163,10 +194,10 @@ class Validation:
 
     @classmethod
     def correct_pieces(self, code):
-        rules = {'K': [1, 2], 'P': [1, 9]}
+        rules = {'K': [1], 'P': range(1, 9)}
         for char, rule in rules.items():
-            if code.count(char) not in range(*rule) \
-                or code.count(char.lower()) not in range(*rule):
+            if code.count(char) not in rule \
+                or code.count(char.lower()) not in rule:
                 return False
         return True
 
