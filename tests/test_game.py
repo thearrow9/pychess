@@ -34,6 +34,29 @@ class GameTest(unittest.TestCase):
         self.assertEqual(0, self.game.to_move)
 
 
+class PieceMoveTest(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.game = game.Game()
+        #build Kg5, Qh6, Re2, Bg6, Nh5, Pd3, Pb3, Ph2, kd5, pa2
+        self.game.parse_fen('8/8/6BQ/3k2KN/8/1P1P4/p3R2P/8 w - 5 55')
+        self.rook_e2 = self.game.piece_on('e2')
+        self.bishop_g6 = self.game.piece_on('g6')
+
+    def test_rook_e2_moves(self):
+        self.assertEqual({'a2', 'b2', 'c2', 'd2', 'f2', 'g2', \
+            'e1', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'},
+            self.game.possible_moves(self.rook_e2))
+
+    def test_bishop_g6_moves(self):
+        self.assertEqual({'h7', 'f7', 'e8', 'f5', 'e4'}, \
+            self.game.possible_moves(self.bishop_g6))
+
+    def test_piece_on_way(self):
+        self.assertEqual(
+            self.game.piece_on_way(self.rook_e2, 'h2'), [set()])
+
+
 class MoveRuleTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,9 +87,18 @@ class MoveRuleTest(unittest.TestCase):
     def test_alias_on_way(self):
         self.assertEqual(set(), self.game.down('h2'))
 
-    def test_top_left_moves(self):
+    def test_up_left_moves(self):
         self.assertEqual({'e3', 'd4', 'c5', 'b6', 'a7'},
-            self.game.top_left('f2'))
+            self.game.up_left('f2'))
+
+    def test_up_right_moves(self):
+        self.assertEqual({'g3', 'h4'}, self.game.up_right('f2'))
+
+    def test_down_left_moves(self):
+        self.assertEqual({'e3', 'd2', 'c1'}, self.game.down_left('f4'))
+
+    def test_down_right_moves(self):
+        self.assertEqual({'g4', 'h3'}, self.game.down_right('f5'))
 
 
 if __name__ == '__main__':

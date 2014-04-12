@@ -4,9 +4,9 @@ BOARD_SIZE = 8
 Y_LABELS = 'abcdefgh'
 FIRST_ORD, LAST_ORD = ord(Y_LABELS[0]), ord(Y_LABELS[-1])
 
-ROOK_MOVE = 'rook_moves'
+ROOK_MOVE = 'rook'
 
-BISHOP_MOVE = {}
+BISHOP_MOVE = 'bishop'
 
 KING_MOVE = ROOK_MOVE
 
