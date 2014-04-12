@@ -5,17 +5,15 @@ Y_LABELS = 'abcdefgh'
 FIRST_ORD, LAST_ORD = ord(Y_LABELS[0]), ord(Y_LABELS[-1])
 
 ROOK_MOVE = 'rook'
-
 BISHOP_MOVE = 'bishop'
-
-KING_MOVE = ROOK_MOVE
+KING_MOVE = 'king'
 
 START_POS_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 PIECES = {'K': dict(label='King', points=1000, long_move=False,
                moves=[KING_MOVE], capture_moves=[], special_moves=[]),
           'Q': dict(label='Queen', points=9, long_move=True,
-               moves=[KING_MOVE], capture_moves=[], special_moves=[]),
+               moves=[ROOK_MOVE, BISHOP_MOVE], capture_moves=[], special_moves=[]),
           'R': dict(label='Rook', points=5, long_move=True,
                moves=[ROOK_MOVE], capture_moves=[], special_moves=[]),
           'B': dict(label='Bishop', points=3, long_move=True,

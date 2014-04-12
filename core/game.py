@@ -8,58 +8,58 @@ class MoveRule(MoveIter):
         self.board = board.Board()
 
     def bishop_moves(self, notation, col_step, row_step):
-        moves = set()
+        moves = []
         for square in self.diagonal_gen( \
             self.col_iter(notation, col_step), \
                 self.row_iter(notation, row_step)):
             is_end = self.piece_on_way(self.piece_on(notation), square)
-            if is_end: return moves | is_end[0]
-            moves.add(square)
+            if is_end: return moves + is_end[0]
+            moves.append(square)
         return moves
 
     def piece_on(self, notation):
         return self.board[notation].piece
 
     def rook_moves(self, iterator, notation, step=1):
-        moves = set()
+        moves = []
         for item in iterator(notation, step):
             square = item + notation[1] if item.islower() \
                 else notation[0] + item
             is_end = self.piece_on_way(self.piece_on(notation), square)
-            if is_end: return moves | is_end[0]
-            moves.add(square)
+            if is_end: return moves + is_end[0]
+            moves.append(square)
         return moves
 
     def piece_on_way(self, piece, square):
         if self.board[square].is_occupied():
             if piece.is_alias(self.piece_on(square)):
-                return [set()]
-            return [{square}]
+                return [[]]
+            return [[square]]
         return False
 
     def left(self, notation):
-        return self.rook_moves(self.col_iter, notation, -1)
+        return set(self.rook_moves(self.col_iter, notation, -1))
 
     def right(self, notation):
-        return self.rook_moves(self.col_iter, notation)
+        return set(self.rook_moves(self.col_iter, notation))
 
     def up(self, notation):
-        return self.rook_moves(self.row_iter, notation)
+        return set(self.rook_moves(self.row_iter, notation))
 
     def down(self, notation):
-        return self.rook_moves(self.row_iter, notation, -1)
+        return set(self.rook_moves(self.row_iter, notation, -1))
 
     def up_left(self, notation):
-        return self.bishop_moves(notation, -1, 1)
+        return set(self.bishop_moves(notation, -1, 1))
 
     def up_right(self, notation):
-        return self.bishop_moves(notation, 1, 1)
+        return set(self.bishop_moves(notation, 1, 1))
 
     def down_left(self, notation):
-        return self.bishop_moves(notation, -1, -1)
+        return set(self.bishop_moves(notation, -1, -1))
 
     def down_right(self, notation):
-        return self.bishop_moves(notation, 1, -1)
+        return set(self.bishop_moves(notation, 1, -1))
 
 
 class PieceMove(MoveRule):
@@ -67,8 +67,10 @@ class PieceMove(MoveRule):
         super().__init__()
 
     def possible_moves(self, piece):
-        methods = [getattr(self, x) for x in piece.moves]
-        return methods[0](piece.location)
+        moves = set()
+        for move in [getattr(self, x) for x in piece.moves]:
+            moves.update(move(piece.location))
+        return moves
 
     def rook(self, notation):
         return self.left(notation) | self.right(notation) | \
@@ -77,6 +79,18 @@ class PieceMove(MoveRule):
     def bishop(self, notation):
         return self.up_left(notation) | self.up_right(notation) | \
             self.down_left(notation) | self.down_right(notation)
+
+    def king(self, notation):
+        squares = [
+            self.rook_moves(self.col_iter, notation, -1),
+            self.rook_moves(self.col_iter, notation, 1),
+            self.rook_moves(self.row_iter, notation, 1),
+            self.rook_moves(self.row_iter, notation, -1),
+            self.bishop_moves(notation, -1, 1),
+            self.bishop_moves(notation, 1, 1),
+            self.bishop_moves(notation, 1, -1),
+            self.bishop_moves(notation, -1, -1)]
+        return set(x[0] for x in squares if len(x))
 
 
 class Game(PieceMove):

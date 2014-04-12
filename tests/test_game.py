@@ -38,10 +38,12 @@ class PieceMoveTest(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.game = game.Game()
-        #build Kg5, Qh6, Re2, Bg6, Nh5, Pd3, Pb3, Ph2, kd5, pa2
-        self.game.parse_fen('8/8/6BQ/3k2KN/8/1P1P4/p3R2P/8 w - 5 55')
+        #build Kg5, Qh6, Re2, Bg6, Nh5, Pf4, Pd3, Pb3, Ph2, kd5, pa2
+        self.game.parse_fen('8/8/6BQ/3k2KN/5P2/1P1P4/p3R2P/8 w - 5 55')
         self.rook_e2 = self.game.piece_on('e2')
         self.bishop_g6 = self.game.piece_on('g6')
+        self.queen_h6 = self.game.piece_on('h6')
+        self.king_g5 = self.game.piece_on('g5')
 
     def test_rook_e2_moves(self):
         self.assertEqual({'a2', 'b2', 'c2', 'd2', 'f2', 'g2', \
@@ -52,9 +54,18 @@ class PieceMoveTest(unittest.TestCase):
         self.assertEqual({'h7', 'f7', 'e8', 'f5', 'e4'}, \
             self.game.possible_moves(self.bishop_g6))
 
+    def test_queen_h6_moves(self):
+        self.assertEqual({'h7', 'g7', 'f8', 'h8'}, \
+            self.game.possible_moves(self.queen_h6))
+
+    def test_king_g5_moves(self):
+        self.assertEqual({'f6', 'f5', 'g4', 'h4'}, \
+            self.game.possible_moves(self.king_g5))
+
+
     def test_piece_on_way(self):
         self.assertEqual(
-            self.game.piece_on_way(self.rook_e2, 'h2'), [set()])
+            self.game.piece_on_way(self.rook_e2, 'h2'), [[]])
 
 
 class MoveRuleTest(unittest.TestCase):
