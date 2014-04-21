@@ -2,12 +2,13 @@ import unittest
 import sys
 sys.path.append('core')
 
+import settings
 import piece
 
 class PieceTest(unittest.TestCase):
     def setUp(self):
-        self.king = piece.CHESS_SET['K']
-        self.queen = piece.CHESS_SET['Q']
+        self.king = settings.CHESS_SET['K']
+        self.queen = settings.CHESS_SET['Q']
 
     def test_king_points(self):
         self.assertEqual(1000, self.king.points)
