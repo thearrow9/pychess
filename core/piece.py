@@ -3,26 +3,41 @@ from notation import Notation
 class Piece:
     def __init__(self, color, location):
         self.color = color
-        self.made_moves = 0
+        self.made_directions = 0
         self.location = location
         self.in_play = True
+        self.moves = self.attacks = set()
+
+        if self.long_move:
+            self.directions = [[x * y[0], x * y[1]] for y in self.directions \
+                for x in range(1, 8)]
+
+        if self.char == 'P' and self.color == 1:
+            self.directions = [[-1 * y[0], -1 * y[1]] for y in self.directions]
 
     @property
     def char(self):
         return self.__class__.__name__
 
+    @property
+    def code(self):
+        return self.char.lower() if self.color else self.char
+
     def is_alias(self, piece):
         return self.color == piece.color
 
-    def all_moves(self):
+    def set_attacks(self):
+        if self.char == 'P':
+            self.attacks = self.all_moves(self.directions[2:]) | self.moves - set(
+                z for z in self.moves if self.location[0] == z[0])
+        else:
+            self.attacks = self.moves
+
+    def all_moves(self, moves=set()):
+        dirs = self.directions if not len(moves) else moves
         notation = self.location
         x, y = Notation.str_to_coords(notation)
 
-        moves = [[x * y[0], x * y[1]] for y in self.moves for x in range(1, 8)] \
-            if self.long_move else self.moves
-
-        if self.char == 'P' and self.color == 1:
-            moves = [[-1 * y[0], -1 * y[1]] for y in moves]
-
-        return set(Notation.coords_to_str([x + a, y + b]) for a, b in moves \
-            if (x + a) in range(8) and (y + b) in range(8))
+        return set(Notation.coords_to_str(
+            [x + a, y + b]) for a, b in dirs if (
+            x + a) in range(8) and (y + b) in range(8))

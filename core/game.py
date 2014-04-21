@@ -10,9 +10,10 @@ class PieceMove():
     def piece_on(self, notation):
         return self.board[notation].piece
 
-    def possible_moves(self, piece):
-        moves = self.__get_moves(piece)
-        return self.__pawn_moves(piece, moves) if piece.char == 'P' else moves
+    def record_moves(self):
+        for piece in self.pieces_in_play():
+            piece.moves = self.__get_moves(piece)
+            piece.set_attacks()
 
     def __pawn_moves(self, pawn, moves):
         color, location = pawn.color, pawn.location
@@ -21,7 +22,7 @@ class PieceMove():
             color == 0 and location[1] == '2')
 
         moves -= set(z for z in moves if z[0] != location[0] and \
-            not self.board[z].is_occupied()) | set(
+            not self.board[z].is_occupied() and z != self.en_passant) | set(
             z for z in moves if z[0] == location[0] and abs(
             int(z[1]) - int(location[1])) == 2 and not can_go_twice)
 
@@ -29,9 +30,10 @@ class PieceMove():
             and self.board[z].is_occupied())
 
     def __get_moves(self, piece):
-        return set(z for z in piece.all_moves() if not(
+        moves = set(z for z in piece.all_moves() if not(
             self.board[z].is_occupied() and piece.is_alias(
             self.piece_on(z))) and self.__can_reach(piece, z))
+        return self.__pawn_moves(piece, moves) if piece.char == 'P' else moves
 
     def __can_reach(self, piece, square):
         return self.__has_path(
@@ -53,6 +55,58 @@ class PieceMove():
         if end - start < 0: return -1
         return 0
 
+    def parse_fen(self, fen):
+    #raise Error if invalid fen notation
+        self.reset_board()
+        self.fen, to_move, self.castles, self.en_passant, *self.moves = fen.split(' ')
+        i = 0
+        for char in ''.join(self.fen.split('/')[::-1]):
+            if char.isdigit():
+                i += int(char)
+            else:
+                self.board.place_id(
+                    settings.CHESS_SET[char.upper()], int(char.islower()), i)
+                i += 1
+
+        self.to_move = 0 if to_move == 'w' else 1
+
+    def short_castle(self, color):
+        squares = ['f8', 'g8'] if color else ['f1', 'g1']
+        king = self.first_piece(['K'], color)
+        enemy_color = 1 >> color
+
+        return not self.is_under_attack(king) and king.code in self.castles \
+            and self.is_available(squares) and not self.is_attacked(
+            squares[0], enemy_color) and not self.is_attacked(
+            squares[1], enemy_color)
+
+    def long_castle(self, color):
+        squares = ['c8', 'd8', 'b8'] if color else ['c1', 'd1', 'b1']
+        king = self.first_piece(['K'], color)
+        code = 'q' if color else 'Q'
+        enemy_color = 1 >> color
+
+        return not self.is_under_attack(king) and code in self.castles \
+            and self.is_available(squares) and not self.is_attacked(
+            squares[0], enemy_color) and not self.is_attacked(
+            squares[1], enemy_color)
+
+    def is_available(self, squares):
+        for square in squares:
+            if self.board[square].is_occupied(): return False
+        return True
+
+    def is_attacked(self, square, color):
+        enemies = self.pieces_by_color(color)
+        return any(square in enemy.attacks for enemy in enemies)
+
+    def is_under_attack(self, piece):
+        target = piece.location
+        enemies = self.pieces_by_color(1 >> piece.color)
+        for enemy in enemies:
+            if target in enemy.attacks: return True
+        return False
+
 
 class Game(PieceMove):
     def __init__(self, fen=settings.START_POS_FEN):
@@ -64,7 +118,8 @@ class Game(PieceMove):
         return
 
     def pieces_by_color(self, color):
-        return self.__find(['K', 'Q', 'R', 'B', 'N', 'P'], color)
+        return [x.piece for x in self.__find(
+            ['K', 'Q', 'R', 'B', 'N', 'P'], color)]
 
     def pieces_in_play(self):
         return [x.piece for x in self.board.squares \
@@ -85,21 +140,6 @@ class Game(PieceMove):
         for square in filter(lambda x: x.is_occupied(), self.board.squares):
             self.board[str(square)].piece.location = \
                 self.board[str(square)] = None
-
-    def parse_fen(self, fen):
-    #raise Error if invalid fen notation
-        self.reset_board()
-        start_pos, *self.options = fen.split(' ')
-        i = 0
-        for char in ''.join(start_pos.split('/')[::-1]):
-            if char.isdigit():
-                i += int(char)
-            else:
-                self.board.place_id(
-                    settings.CHESS_SET[char.upper()], int(char.islower()), i)
-                i += 1
-
-        self.to_move = 0 if self.options[0] == 'w' else 1
 
     def __switch_side(self):
        self.to_move = (self.to_move + 1) % 2
