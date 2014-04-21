@@ -31,6 +31,7 @@ class Board():
             settings.Y_LABELS[index % settings.BOARD_SIZE],
                 index // settings.BOARD_SIZE + 1)
 
+
     def str_to_index(self, notation):
         return settings.Y_LABELS.index(notation[0]) + \
             (int(notation[1]) - 1) * settings.BOARD_SIZE

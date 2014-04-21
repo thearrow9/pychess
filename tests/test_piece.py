@@ -25,5 +25,6 @@ class PieceTest(unittest.TestCase):
         self.assertEqual('Queen', self.queen.label)
 
 
+
 if __name__ == '__main__':
     unittest.main()

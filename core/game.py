@@ -1,96 +1,57 @@
 import settings
 import board
-from moveiter import MoveIter
-from piece import Piece
+from notation import Notation
 
-class MoveRule(MoveIter):
+
+class PieceMove():
     def __init__(self):
         self.board = board.Board()
-
-    def bishop_moves(self, notation, col_step, row_step):
-        moves = []
-        for square in self.diagonal_gen( \
-            self.col_iter(notation, col_step), \
-                self.row_iter(notation, row_step)):
-            is_end = self.piece_on_way(self.piece_on(notation), square)
-            if is_end: return moves + is_end[0]
-            moves.append(square)
-        return moves
 
     def piece_on(self, notation):
         return self.board[notation].piece
 
-    def rook_moves(self, iterator, notation, step=1):
-        moves = []
-        for item in iterator(notation, step):
-            square = item + notation[1] if item.islower() \
-                else notation[0] + item
-            is_end = self.piece_on_way(self.piece_on(notation), square)
-            if is_end: return moves + is_end[0]
-            moves.append(square)
-        return moves
-
-    def piece_on_way(self, piece, square):
-        if self.board[square].is_occupied():
-            if piece.is_alias(self.piece_on(square)):
-                return [[]]
-            return [[square]]
-        return False
-
-    def left(self, notation):
-        return set(self.rook_moves(self.col_iter, notation, -1))
-
-    def right(self, notation):
-        return set(self.rook_moves(self.col_iter, notation))
-
-    def up(self, notation):
-        return set(self.rook_moves(self.row_iter, notation))
-
-    def down(self, notation):
-        return set(self.rook_moves(self.row_iter, notation, -1))
-
-    def up_left(self, notation):
-        return set(self.bishop_moves(notation, -1, 1))
-
-    def up_right(self, notation):
-        return set(self.bishop_moves(notation, 1, 1))
-
-    def down_left(self, notation):
-        return set(self.bishop_moves(notation, -1, -1))
-
-    def down_right(self, notation):
-        return set(self.bishop_moves(notation, 1, -1))
-
-
-class PieceMove(MoveRule):
-    def __init__(self):
-        super().__init__()
-
     def possible_moves(self, piece):
-        moves = set()
-        for move in [getattr(self, x) for x in piece.moves]:
-            moves.update(move(piece.location))
-        return moves
+        moves = self.__get_moves(piece)
+        return self.__pawn_moves(piece, moves) if piece.char == 'P' else moves
 
-    def rook(self, notation):
-        return self.left(notation) | self.right(notation) | \
-            self.up(notation) | self.down(notation)
+    def __pawn_moves(self, pawn, moves):
+        color, location = pawn.color, pawn.location
 
-    def bishop(self, notation):
-        return self.up_left(notation) | self.up_right(notation) | \
-            self.down_left(notation) | self.down_right(notation)
+        can_go_twice = (color == 1 and location[1] == '7') or (
+            color == 0 and location[1] == '2')
 
-    def king(self, notation):
-        squares = [
-            self.rook_moves(self.col_iter, notation, -1),
-            self.rook_moves(self.col_iter, notation, 1),
-            self.rook_moves(self.row_iter, notation, 1),
-            self.rook_moves(self.row_iter, notation, -1),
-            self.bishop_moves(notation, -1, 1),
-            self.bishop_moves(notation, 1, 1),
-            self.bishop_moves(notation, 1, -1),
-            self.bishop_moves(notation, -1, -1)]
-        return set(x[0] for x in squares if len(x))
+        moves -= set(z for z in moves if z[0] != location[0] and \
+            not self.board[z].is_occupied()) | set(
+            z for z in moves if z[0] == location[0] and abs(
+            int(z[1]) - int(location[1])) == 2 and not can_go_twice)
+
+        return moves - set(z for z in moves if z[0] == location[0] \
+            and self.board[z].is_occupied())
+
+    def __get_moves(self, piece):
+        return set(z for z in piece.all_moves() if not(
+            self.board[z].is_occupied() and piece.is_alias(
+            self.piece_on(z))) and self.__can_reach(piece, z))
+
+    def __can_reach(self, piece, square):
+        return self.__has_path(
+            piece.location, square) if piece.long_move else True
+
+    def __has_path(self, start, end):
+        col_step = self.__get_step(ord(start[0]), ord(end[0]))
+        row_step = self.__get_step(int(start[1]), int(end[1]))
+        next_sq = start
+
+        while True:
+            next_sq = '{}{}'.format(chr(ord(next_sq[0]) + col_step),
+                int(next_sq[1]) + row_step)
+            if next_sq == end: return True
+            if self.board[next_sq].is_occupied(): return False
+
+    def __get_step(self, start, end):
+        if end - start > 0: return 1
+        if end - start < 0: return -1
+        return 0
 
 
 class Game(PieceMove):
@@ -99,6 +60,7 @@ class Game(PieceMove):
         self.parse_fen(fen)
 
     def get_moves(self, piece):
+#TODO
         return
 
     def pieces_by_color(self, color):
