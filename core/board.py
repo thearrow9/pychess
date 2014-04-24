@@ -1,47 +1,58 @@
 import settings
+from notation import Notation
 
 class Square:
-    def __init__(self, index):
+    def __init__(self, index, notation):
+        self.index = index
         self.color = index % 2
-        self.row = index // settings.BOARD_SIZE + 1
-        self.col = index % settings.BOARD_SIZE
         self.piece = None
+        self.notation = notation
 
     def is_occupied(self):
         return self.piece is not None
 
+    @property
+    def row(self):
+        return Notation.row(notation)
+
+    @property
+    def col(self):
+        return self.notation[0]
+
     def __str__(self):
-        return '{}{}'.format(settings.Y_LABELS[self.col], self.row)
+        return self.notation
 
 
 class Board():
     def __init__(self):
-        self.squares = [Square(i) for i in range(
-            settings.BOARD_SIZE ** 2)]
+        self.squares = [Square(i + 1, notation) for i, notation in enumerate(
+            Notation.all_squares())]
 
     def place(self, piece, color, notation):
         self[notation] = piece(color, notation)
 
-    def place_id(self, piece, color, index):
-        self.squares[index].piece = piece(
-            color, self.index_to_string(index))
-
-    def index_to_string(self, index):
-        return '{}{}'.format(
-            settings.Y_LABELS[index % settings.BOARD_SIZE],
-                index // settings.BOARD_SIZE + 1)
-
-
-    def str_to_index(self, notation):
-        return settings.Y_LABELS.index(notation[0]) + \
-            (int(notation[1]) - 1) * settings.BOARD_SIZE
-
-    def opp_square(self, notation):
-        return '{}{}'.format(notation[0], str(
-            settings.BOARD_SIZE + 1 - int(notation[1])))
-
     def __getitem__(self, notation):
-        return self.squares[self.str_to_index(notation)]
+        return next(square for square in self.squares if notation in (
+            square.notation, square.index))
 
     def __setitem__(self, notation, item):
-        self.squares[self.str_to_index(notation)].piece = item
+        self[notation].piece = item
+        if item is not None:
+            item.location = notation
+
+    def _arrange_pieces(self, fen):
+        self.reset()
+        i = 0
+        squares = Notation.all_squares(True)
+        for char in fen.replace('/', ''):
+            if char.isdigit():
+                i += int(char)
+            else:
+                self.place(
+                    settings.CHESS_SET[char.upper()], int(
+                    char.islower()), squares[i])
+                i += 1
+
+    def reset(self):
+        for square in [x for x in self.squares if x.is_occupied()]:
+            self[str(square)] = None

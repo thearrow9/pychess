@@ -5,7 +5,7 @@ sys.path.append('core')
 import validation
 import settings
 
-class ValidationTest(unittest.TestCase):
+class FENValidationTest(unittest.TestCase):
     def test_valid_fen(self):
         self.assertTrue(
             validation.Validation.is_fen(settings.START_POS_FEN))

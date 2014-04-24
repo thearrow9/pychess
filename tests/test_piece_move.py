@@ -16,6 +16,7 @@ class PieceMoveTest(unittest.TestCase):
         self.bishop_g6 = self.game.piece_on('g6')
         self.queen_h6 = self.game.piece_on('h6')
         self.king_g5 = self.game.piece_on('g5')
+        self.king_d5 = self.game.piece_on('d5')
         self.knight_h5 = self.game.piece_on('h5')
         self.pawn_g2 = self.game.piece_on('g2')
         self.pawn_h2 = self.game.piece_on('h2')
@@ -27,23 +28,23 @@ class PieceMoveTest(unittest.TestCase):
     #test all moves
 
     def test_kg5_moves(self):
-        self.assertEqual({'f5', 'f6', 'f4', 'g4', 'g6', 'h4',
+        self.assertSetEqual({'f5', 'f6', 'f4', 'g4', 'g6', 'h4',
             'h5', 'h6'}, self.king_g5.all_moves())
 
     def test_pb7_moves(self):
-        self.assertEqual({'b6', 'b5', 'a6', 'c6'},
+        self.assertSetEqual({'b6', 'b5', 'a6', 'c6'},
             self.pawn_b7.all_moves())
 
     def test_pg2_moves(self):
-        self.assertEqual({'h3', 'f3', 'g3', 'g4'},
+        self.assertSetEqual({'h3', 'f3', 'g3', 'g4'},
             self.pawn_g2.all_moves())
 
     def test_nh5_moves(self):
-        self.assertEqual({'f4', 'g3', 'f6', 'g7'},
+        self.assertSetEqual({'f4', 'g3', 'f6', 'g7'},
             self.knight_h5.all_moves())
 
     def test_re2_moves(self):
-        self.assertEqual({'a2', 'b2', 'c2', 'd2', 'f2', 'g2', 'h2',
+        self.assertSetEqual({'a2', 'b2', 'c2', 'd2', 'f2', 'g2', 'h2',
             'e1', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'},
             self.rook_e2.all_moves())
 
@@ -62,43 +63,55 @@ class PieceMoveTest(unittest.TestCase):
     def test_not_attacked_squares(self):
         self.assertFalse(self.game.is_attacked('a1', 1))
 
+    def test_protect_alias(self):
+        self.assertTrue(self.game.is_protected(self.knight_h5))
+
+    def test_black_king_attack(self):
+        self.assertSetEqual({'c4', 'e4', 'd4', 'c5', 'c6', 'd6', 'e6'},
+            self.king_d5.attacks)
+
+    def test_black_attacks(self):
+        self.assertSetEqual({'b1', 'b3', 'b5', 'c6', 'd7', 'e8', 'c5',
+            'a6', 'g3', 'd4', 'f4', 'd6', 'e6', 'e4', 'c4'},
+            self.game.all_attacks(1))
+
     #test possible moves only
 
     def test_en_passant_move(self):
-        self.assertEqual({'f6', 'e6'},
+        self.assertSetEqual({'f6', 'e6'},
             self.pawn_f5.moves)
 
     def test_rook_e2_moves(self):
-        self.assertEqual({'a2', 'b2', 'c2', 'd2', 'f2',
+        self.assertSetEqual({'a2', 'b2', 'c2', 'd2', 'f2',
             'e1', 'e3', 'e4', 'e5'},
             self.rook_e2.moves)
 
     def test_pawn_g2_moves(self):
-        self.assertEqual({'g3', 'g4'},
+        self.assertSetEqual({'g3', 'g4'},
             self.pawn_g2.moves)
 
     def test_pawn_h2_moves(self):
-        self.assertEqual({'h3'},
+        self.assertSetEqual({'h3'},
             self.pawn_h2.moves)
 
     def test_pawn_b3_moves(self):
-        self.assertEqual({'b4', 'a4'},
+        self.assertSetEqual({'b4', 'a4'},
             self.pawn_b3.moves)
 
     def test_bishop_g6_moves(self):
-        self.assertEqual({'h7', 'f7', 'e8'},
+        self.assertSetEqual({'h7', 'f7', 'e8'},
             self.bishop_g6.moves)
 
     def test_queen_h6_moves(self):
-        self.assertEqual({'h7', 'g7', 'f8', 'h8'},
+        self.assertSetEqual({'h7', 'g7', 'f8', 'h8'},
             self.queen_h6.moves)
 
     def test_king_g5_moves(self):
-        self.assertEqual({'f6', 'g4', 'h4'},
+        self.assertSetEqual({'f6', 'g4', 'h4'},
             self.king_g5.moves)
 
     def test_knight_h5_moves(self):
-        self.assertEqual({'g3', 'g7', 'f6'},
+        self.assertSetEqual({'g3', 'g7', 'f6'},
             self.knight_h5.moves)
 
 

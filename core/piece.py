@@ -5,7 +5,6 @@ class Piece:
         self.color = color
         self.made_directions = 0
         self.location = location
-        self.in_play = True
         self.moves = self.attacks = set()
 
         if self.long_move:
@@ -14,6 +13,10 @@ class Piece:
 
         if self.char == 'P' and self.color == 1:
             self.directions = [[-1 * y[0], -1 * y[1]] for y in self.directions]
+
+    @property
+    def in_play(self):
+        return bool(self.location)
 
     @property
     def char(self):
@@ -26,12 +29,12 @@ class Piece:
     def is_alias(self, piece):
         return self.color == piece.color
 
-    def set_attacks(self):
+    def set_attacks(self, moves):
         if self.char == 'P':
-            self.attacks = self.all_moves(self.directions[2:]) | self.moves - set(
-                z for z in self.moves if self.location[0] == z[0])
+            self.attacks = self.all_moves(self.directions[2:]) | moves - set(
+                z for z in moves if self.location[0] == z[0])
         else:
-            self.attacks = self.moves
+            self.attacks = moves
 
     def all_moves(self, moves=set()):
         dirs = self.directions if not len(moves) else moves
