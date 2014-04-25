@@ -11,7 +11,7 @@ class PieceMoveTest(unittest.TestCase):
         #build Kg5, Qh6, Re2, Bg6, Nh5, Pf5, Pf4, Pd3, Pb3, Pg2, Ph2
         #kd5, ba4, pa2, pb7, ph4, pe5
         self.game.parse_fen('8/1p6/6BQ/3kpPKN/b4P1p/1P1P4/p3R1PP/8 w - e6 5 55')
-        self.game.record_moves()
+        self.game.set_moves()
         self.rook_e2 = self.game.piece_on('e2')
         self.bishop_g6 = self.game.piece_on('g6')
         self.queen_h6 = self.game.piece_on('h6')
@@ -25,33 +25,32 @@ class PieceMoveTest(unittest.TestCase):
         self.pawn_b3 = self.game.piece_on('b3')
         self.pawn_f5 = self.game.piece_on('f5')
 
-    #test all moves
+    #test valid moves
 
     def test_kg5_moves(self):
-        self.assertSetEqual({'f5', 'f6', 'f4', 'g4', 'g6', 'h4',
-            'h5', 'h6'}, self.king_g5.all_moves())
+        self.assertSetEqual({'f6', 'g4', 'h4'}, self.king_g5.moves)
 
     def test_pb7_moves(self):
-        self.assertSetEqual({'b6', 'b5', 'a6', 'c6'},
-            self.pawn_b7.all_moves())
+        self.assertSetEqual({'b6', 'b5'},
+            self.pawn_b7.moves)
 
     def test_pg2_moves(self):
-        self.assertSetEqual({'h3', 'f3', 'g3', 'g4'},
-            self.pawn_g2.all_moves())
+        self.assertSetEqual({'g3', 'g4'},
+            self.pawn_g2.moves)
 
     def test_nh5_moves(self):
-        self.assertSetEqual({'f4', 'g3', 'f6', 'g7'},
-            self.knight_h5.all_moves())
+        self.assertSetEqual({'g3', 'f6', 'g7'},
+            self.knight_h5.moves)
 
     def test_re2_moves(self):
-        self.assertSetEqual({'a2', 'b2', 'c2', 'd2', 'f2', 'g2', 'h2',
-            'e1', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'},
-            self.rook_e2.all_moves())
+        self.assertSetEqual({'a2', 'b2', 'c2', 'd2', 'f2',
+            'e1', 'e3', 'e4', 'e5'},
+            self.rook_e2.moves)
 
     def test_en_passant_square(self):
         self.assertEqual('e6', self.game.en_passant)
 
-    #test under attack
+    #test attacks
 
     def test_pa2_is_attacked(self):
         self.assertTrue(
@@ -75,7 +74,8 @@ class PieceMoveTest(unittest.TestCase):
             'a6', 'g3', 'd4', 'f4', 'd6', 'e6', 'e4', 'c4'},
             self.game.all_attacks(1))
 
-    #test possible moves only
+    #test legal moves only
+    #TODO repair those tests below
 
     def test_en_passant_move(self):
         self.assertSetEqual({'f6', 'e6'},

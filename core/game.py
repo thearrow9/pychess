@@ -17,6 +17,8 @@ class GameBase:
 
         self.to_move = 0 if to_move == 'w' else 1
 
+    #deprecated methods
+
     def _can_reach(self, piece, square):
         return self._has_path(
             piece.location, square) if piece.long_move else True
@@ -36,6 +38,8 @@ class GameBase:
         if end - start > 0: return 1
         if end - start < 0: return -1
         return 0
+
+    #end deprecated methods
 
     def other_color(self, color):
         return 1 >> color
@@ -73,10 +77,9 @@ class PieceSelector(GameBase):
         return self.board[notation].piece
 
     def moves_by_color(self, color):
-        pieces = self.pieces_by_color(color)
-        king = next(piece for piece in pieces if piece.char == 'K')
-
-#TODO
+        #pieces = self.pieces_by_color(color)
+        #king = next(piece for piece in pieces if piece.char == 'K')
+        #TODO
         return
 
     def pieces_by_color(self, color):
@@ -166,6 +169,34 @@ class PieceMove(PositionValidation):
     def __init__(self):
         super().__init__()
 
+    def add_pawn_captures(self, pawn, all_moves):
+        color, location = pawn.color, pawn.location
+        moves = set(move for move in all_moves \
+            if not self.board[move].is_occupied())
+
+        x, y = Notation.str_to_coords(location)
+        captures = [[c[0][0] + x, c[0][1] + y] for c in pawn.directions_[2:]]
+        captures = [Notation.coords_to_str(x) for x in captures]
+        pawn.captures = [x for x in captures if x]
+
+        for capture in pawn.captures:
+            if self.board[capture].is_occupied() \
+            and not pawn.is_alias(self.piece_on(capture)):
+                moves.update({capture})
+
+        if len(self.en_passant) == 2 and self.en_passant in pawn.captures:
+            moves.update({self.en_passant})
+        return moves
+
+    def all_attacks(self, color):
+        squares = set()
+        pieces = self.pieces_by_color(color)
+        for piece in pieces:
+            squares.update(piece.attacks)
+        return squares
+
+    #deprecated methods
+
     def pawn_moves(self, pawn, all_moves):
         color, location = pawn.color, pawn.location
         moves = set(all_moves)
@@ -181,14 +212,7 @@ class PieceMove(PositionValidation):
         return moves - set(z for z in moves if z[0] == location[0] \
             and self.board[z].is_occupied())
 
-    def all_attacks(self, color):
-        squares = set()
-        pieces = self.pieces_by_color(color)
-        for piece in pieces:
-            squares.update(piece.attacks)
-        return squares
-
-    def record_moves(self, validation=True):
+    def record_moves(self):
         kings = [self.first_piece(['K'], 0),
             self.first_piece(['K'], 1)]
         for piece in self.pieces_in_play():
@@ -205,40 +229,53 @@ class PieceMove(PositionValidation):
         piece.set_attacks(valid_moves)
         moves = set(valid_moves)
         enemies = self.get_enemies(piece.color)
-        for move in moves:
-            #self.try_move(piece, move)
-            #self._undo_last_move()
-
-            pass
-
-
-        #FIXME bad method
-
-        #if piece is not king and not self.is_under_attack(king):
-        #    return valid_moves
-        #if piece is king:
-        #    moves = valid_moves - self.all_attacks(
-        #        self.other_color(piece.color))
-        #    return set(move for move in moves if \
-        #        not self.board[move].is_occupied() or not self.is_protected(
-        #        self.piece_on(move)))
-
-
-
-        #for move in set(valid_moves):
-        #    self._moved(piece, move)
-        #    self.record_moves(False)
-        #    if self.is_under_attack(king):
-        #        valid_moves.remove(move)
-        #    self._undo_last_move()
-
         return valid_moves
+
+    #end of deprecated methods
+
+    def set_moves(self):
+        for piece in self.pieces_in_play():
+            moves = self._collect_moves(piece)
+            piece.setup(moves)
+
+    def _collect_moves(self, piece):
+        moves = self.get_moves_(piece)
+        return self.add_pawn_captures(
+            piece, moves) if piece.char == 'P' else moves
+
+    def get_moves_(self, piece):
+        if piece.char == 'P':
+            step = 2 if piece.is_pawn_first_move() else 1
+            dirs = piece.directions_[:step]
+        else:
+            dirs = piece.directions_
+
+        location = piece.location
+        x, y = Notation.str_to_coords(location)
+        moves = set()
+
+        for direction in dirs:
+            for coords in direction:
+                new_x, new_y = coords[0] + x, coords[1] + y
+                if new_x not in range(8) or new_y not in range(8): break
+                square = Notation.coords_to_str([new_x, new_y])
+                if self.board[square].is_occupied():
+                    blocker = self.piece_on(square)
+                    if not piece.is_alias(blocker):
+                        moves.update({square})
+                    break
+                moves.update({square})
+        return moves
+
+
+    def legalize_moves(self, piece):
+        #TODO replacement method
+        pass
 
     def _undo_last_move(self):
         if not len(self.last_move): return False
-        self.board[self.last_move['from']] = self.last_move['moved']
-        self.board[self.last_move['to']] = self.last_move['taken']
-        self._switch_side()
+        last_move = self.last_move.pop()
+        self.board._arrange_pieces(last_move)
         return True
 
     def make_move(self, piece, location):
@@ -255,8 +292,7 @@ class PieceMove(PositionValidation):
         self._switch_side()
 
     def _moved(self, piece, location):
-        self.last_move = {'moved': piece, 'taken': self.piece_on(location),
-            'from': piece.location, 'to': location}
+        self.last_move.append(self._create_fen())
         self.board[location] = piece
         self.board[piece.location] = None
 

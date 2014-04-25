@@ -8,6 +8,7 @@ class Notation:
 
     @staticmethod
     def coords_to_str(coords):
+        if not all(x in range(8) for x in coords): return False
         return '{}{}'.format(
             settings.Y_LABELS[coords[1]], int(coords[0]) + 1)
 
