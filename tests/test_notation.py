@@ -22,6 +22,14 @@ class NotationTest(unittest.TestCase):
     def test_opp_square(self):
         self.assertEqual('c2', Notation.opp_square('c7'))
 
+    def test_squares_between(self):
+        self.assertSetEqual({'a7', 'a8'}, Notation.squares_between('a7', 'a8'))
+        self.assertSetEqual({'a2', 'a3', 'a4', 'a5'}, Notation.squares_between('a2', 'a5'))
+        self.assertSetEqual({'a2', 'b3', 'c4', 'd5'}, Notation.squares_between('a2', 'd5'))
+        self.assertSetEqual({'e5', 'd5'}, Notation.squares_between('e5', 'd5'))
+        self.assertSetEqual({'h1', 'g2', 'f3', 'e4'},
+            Notation.squares_between('e4', 'h1'))
+
 
 if __name__ == '__main__':
     unittest.main()

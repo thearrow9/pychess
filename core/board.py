@@ -11,14 +11,6 @@ class Square:
     def is_occupied(self):
         return self.piece is not None
 
-    @property
-    def row(self):
-        return Notation.row(notation)
-
-    @property
-    def col(self):
-        return self.notation[0]
-
     def __str__(self):
         return self.notation
 

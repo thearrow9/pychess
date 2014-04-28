@@ -30,3 +30,30 @@ class Notation:
         return '{}{}'.format(notation[0], str(
             settings.BOARD_SIZE + 1 - int(notation[1])))
 
+    @staticmethod
+    def squares_between(start, end):
+        moves = {start, end}
+        col_step = Notation.get_step(ord(end[0]), ord(start[0]))
+        row_step = Notation.get_step(Notation.row(end), Notation.row(start))
+
+        if start[0] == end[0]:
+            return moves | set(end[0] + str(x) for x in range(
+                Notation.row(start), Notation.row(end), row_step))
+
+        if start[1] == end[1]:
+            return moves | set(chr(x) + end[1] for x in range(
+                ord(start[0]), ord(end[0]), col_step))
+
+        cols = [chr(col) for col in range(ord(start[0]), ord(end[0]), col_step)]
+        rows = [str(row) for row in range(Notation.row(start), Notation.row(end), row_step)]
+        return moves | set(cols[i] + rows[i] for i in range(len(rows)))
+
+    @staticmethod
+    def get_step(a, b):
+        if a > b: return 1
+        if b > a: return -1
+        return 0
+
+    @staticmethod
+    def side_to_char(index):
+        return 'b' if index else 'w'

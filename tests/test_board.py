@@ -3,6 +3,7 @@ import sys
 sys.path.append('core')
 
 import board
+import settings
 
 class BoardTest(unittest.TestCase):
     def setUp(self):
@@ -20,6 +21,11 @@ class BoardTest(unittest.TestCase):
 
     def test_square_name(self):
         self.assertEqual('b1', str(self.board.squares[1]))
+
+    def test_place_piece(self):
+        self.board.place(settings.CHESS_SET['K'], 1, 'e1')
+        square = self.board['e1']
+        self.assertEqual('k', square.piece.code)
 
     def test_square_occupation(self):
         self.assertFalse(self.board['a4'].is_occupied())

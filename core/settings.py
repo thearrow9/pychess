@@ -7,7 +7,7 @@ FIRST_ORD, LAST_ORD = ord(Y_LABELS[0]), ord(Y_LABELS[-1])
 ROOK_DIR = [[-1, 0], [1, 0], [0, 1], [0, -1]]
 BISHOP_DIR = [[1, 1], [1, -1], [-1, -1], [-1, 1]]
 KNIGHT_DIR = [[1, 2], [1, -2], [-1, 2], [-1, -2], [2, -1], [2, 1], [-2, 1], [-2, -1]]
-PAWN_DIR = [[1, 0], [2, 0], [1, 1], [1, -1]]
+PAWN_DIR = [[2, 0], [1, 0], [1, 1], [1, -1]]
 
 KING_DIR = BISHOP_DIR + ROOK_DIR
 

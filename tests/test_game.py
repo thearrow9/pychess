@@ -5,8 +5,7 @@ sys.path.append('core')
 import game
 
 class GameTest(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def setUp(self):
         self.game = game.Game()
         self.white_king = self.game.piece_on('e1')
         self.king = game.settings.CHESS_SET['K']
