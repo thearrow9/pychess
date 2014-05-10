@@ -28,10 +28,14 @@ class FEN_ValidationTest(unittest.TestCase):
         self.assertFalse(validation.Validation.is_code(
             '8/8/8/8/8/8/8/KQ6'))
 
+    def test_empty_board(self):
+        self.assertFalse(validation.Validation.is_code(
+            '8/8/8/8/8/8/8/8'))
+
     @unittest.skip('not implemented')
     def test_three_promotions_and_six_pawns(self):
-        self.assertFalse(validation.Validation.is_fen(
-            'QQRRR3/8/8/8/8/PPPPPPQK/8/k7 w - - 0 1'))
+        self.assertFalse(validation.Validation.is_code(
+            'QQRRR3/8/8/8/8/PPPPPPQK/8/k7'))
 
 
 if __name__ == '__main__':

@@ -11,7 +11,8 @@ class GameBase:
 
     def parse_fen(self, fen):
         if not Validation.is_fen(fen):
-            raise errors.InputError('Position requires two kings and no more than 8 pawns for each side')
+            raise errors.InputError(
+                'Position requires two kings and no more than 8 pawns for each side')
 
         self.fen, to_move, self.castles, self.en_passant, self.halfmoves, \
             self.num_moves = fen.split(' ')
@@ -104,28 +105,23 @@ class PositionValidation(PieceSelector):
         enemy_king = self.first_piece(['K'], self.other_color(self.to_move))
         return not self.is_under_attack(enemy_king)
 
-    def is_legal_short_castle(self, color):
-        squares = ['f8', 'g8'] if color else ['f1', 'g1']
+    def is_legal_castle(self, color, short_castle=True):
         king = self.first_piece(['K'], color)
         enemy_color = self.other_color(color)
 
-        return not self.is_under_attack(king) and king.code in self.castles \
-            and self.is_available(squares) and not self.is_attacked(
-            squares[0], enemy_color) and not self.is_attacked(
-            squares[1], enemy_color)
-
-    def is_legal_long_castle(self, color):
-        squares = ['c8', 'd8', 'b8'] if color else ['c1', 'd1', 'b1']
-        king = self.first_piece(['K'], color)
-        code = 'q' if color else 'Q'
-        enemy_color = self.other_color(color)
+        if short_castle:
+            squares = ['f8', 'g8'] if color else ['f1', 'g1']
+            code = king.code
+        else:
+            squares = ['c8', 'd8', 'b8'] if color else ['c1', 'd1', 'b1']
+            code = 'q' if color else 'Q'
 
         return not self.is_under_attack(king) and code in self.castles \
-            and self.is_available(squares) and not self.is_attacked(
+            and self.are_available(squares) and not self.is_attacked(
             squares[0], enemy_color) and not self.is_attacked(
             squares[1], enemy_color)
 
-    def is_available(self, squares):
+    def are_available(self, squares):
         for square in squares:
             if self.board[square].is_occupied(): return False
         return True
@@ -269,14 +265,21 @@ class PieceMove(PositionValidation):
         self.board[piece.location] = None
         del piece
 
+    def play_(self, start, end):
+        piece = self.piece_on(start)
+        self.play(piece, end)
+
     def play(self, piece, location):
         self.set_en_passant(piece, location)
         self.last_position.append(self.save_position())
+        self.make_the_move(piece, location)
+        self._switch_side()
+        self.setup()
+
+    def make_the_move(self, piece, location):
         start = str(piece.location)
         self.board[location] = piece
         self.board[start] = None
-        self._switch_side()
-        self.setup()
 
     def save_position(self):
         return '{} {} {} {} {} {}'.format(

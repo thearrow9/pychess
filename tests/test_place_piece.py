@@ -24,13 +24,13 @@ class PlacePieceTest(unittest.TestCase):
         self.assertEqual('c4', self.wk.location)
         self.assertFalse(self.game.board['d5'].is_occupied())
 
-    def test_move_wk_to_c6(self):
+    def test_move_white_king(self):
         self.game.play(self.wk, 'c4')
         piece_locations = set(piece.location for piece in self.game.pieces_in_play())
         self.assertTrue('c4' in piece_locations and \
             'd5' not in piece_locations)
 
-    def test_move_kd5_to_c6_and_undo(self):
+    def test_move_white_king_and_undo(self):
         self.game.play(self.wk, 'c6')
         self.assertTrue(self.game._undo_last_move())
         self.assertEqual('d5', self.game.first_piece(['K'], 0).location)
@@ -38,6 +38,8 @@ class PlacePieceTest(unittest.TestCase):
 
     def test_capture_and_undo_it(self):
         self.game.play(self.wk, 'c4')
+        self.assertTrue(self.game._undo_last_move())
+        self.assertTrue(self.game.board['d5'].is_occupied())
         self.assertTrue(self.game.board['c4'].is_occupied())
 
     def test_play_illegal_move(self):

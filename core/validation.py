@@ -5,7 +5,7 @@ class Validation:
     def is_fen(self, fen):
         code, *args = fen.split(' ')
         return bool(re.match(
-            '^({0}\/){{7}}{0} [wb] (-|K?Q?k?q?) (-|[a-z][36]) \d+ \d+'. \
+            '^({0}\/){{7}}{0} [wb] (-|K?Q?k?q?) (-|[a-h][36]) \d+ \d+'. \
                 format('[rbnqkpRBNQKP1-8]{1,8}'), fen)) \
                     and self.is_code(code)
 
