@@ -24,7 +24,7 @@ class GameBase:
         self.setup()
 
     def other_color(self, color):
-        return 1 >> color
+        return 1 - color
 
     def _switch_side(self):
        self.to_move = self.other_color(self.to_move)
@@ -150,11 +150,7 @@ class PieceMove(PositionValidation):
             squares.update(piece.attacks)
         return squares
 
-    def promotion(self, char):
-        pawns = [pawn for pawn in self.pieces_by_char('P') \
-            if pawn.location[1] == '1' or pawn.location[1] == '8']
-        if not len(pawns): return False
-        pawn = pawns[0]
+    def promotion(self, pawn, char):
         new_piece = settings.CHESS_SET[char.upper()](
             pawn.color, pawn.location)
 
@@ -213,6 +209,13 @@ class PieceMove(PositionValidation):
                     and not piece.is_alias(self.piece_on(move))) or (
                     move[0] == location[0] and not self.board[move].is_occupied()))
 
+            promoting_pieces = {'R', 'Q', 'B', 'N'}
+            for move in set(all_moves):
+                if move[1] == '1' or move[1] == '8':
+                    all_moves.update(set('{}={}'.format(
+                        move, x) for x in promoting_pieces ))
+                    all_moves.remove(move)
+
         if piece.char == 'K':
             self.board[piece.location] = None
             for enemy in enemies:
@@ -222,6 +225,12 @@ class PieceMove(PositionValidation):
             all_moves -= set(
                 move for move in all_moves if self.board[move].is_occupied() and
                     self.is_protected(self.piece_on(move)))
+
+            if self.is_legal_castle(piece.color):
+                all_moves.add('g8') if piece.color else all_moves.add('g1')
+
+            if self.is_legal_castle(piece.color, False):
+                all_moves.add('c8') if piece.color else all_moves.add('c1')
 
             return all_moves - enemy_attacks
 
@@ -270,9 +279,13 @@ class PieceMove(PositionValidation):
         self.play(piece, end)
 
     def play(self, piece, location):
-        self.set_en_passant(piece, location)
+        self.old_en_passant = str(self.en_passant)
         self.last_position.append(self.save_position())
-        self.make_the_move(piece, location)
+        end, *prom = location.split('=')
+        self.set_en_passant(piece, end)
+        self.make_the_move(piece, end)
+        if prom:
+            self.promotion(piece, prom[0])
         self._switch_side()
         self.setup()
 
@@ -280,6 +293,9 @@ class PieceMove(PositionValidation):
         start = str(piece.location)
         self.board[location] = piece
         self.board[start] = None
+        if location == self.old_en_passant and piece.char == 'P':
+            row = 4 if piece.color else 5
+            self.board['{}{}'.format(self.old_en_passant[0], row)] = None
 
     def save_position(self):
         return '{} {} {} {} {} {}'.format(
