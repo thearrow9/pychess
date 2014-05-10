@@ -35,6 +35,11 @@ class CastleTest(unittest.TestCase):
         self.assertFalse(self.game.is_legal_castle(0))
         self.assertFalse(self.game.is_legal_castle(0, False))
 
+    def test_castle_moves(self):
+        self.game.parse_fen('8/8/k7/8/8/8/8/R3K2R w KQ - 10 20')
+        white_king = self.game.piece_on('e1')
+        self.assertTrue({'G1', 'C1'}.issubset(white_king.moves))
+
 
 if __name__ == '__main__':
     unittest.main()

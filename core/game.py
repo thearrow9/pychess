@@ -19,7 +19,6 @@ class GameBase:
         self.num_moves = int(self.num_moves)
         self.board._arrange_pieces(self.fen)
         self.last_position = []
-
         self.to_move = 0 if to_move == 'w' else 1
         self.setup()
 
@@ -27,9 +26,10 @@ class GameBase:
         return 1 - color
 
     def _switch_side(self):
-       self.to_move = self.other_color(self.to_move)
-       #if self.to_move:
-       #    self.num_moves += 1
+        self.to_move = self.other_color(self.to_move)
+        #TODO move No. adjustment
+        #if self.to_move:
+        #    self.num_moves += 1
 
     def _encode_pieces(self):
         fen = ''
@@ -70,8 +70,7 @@ class PieceSelector(GameBase):
             ['K', 'Q', 'R', 'B', 'N', 'P'], color)]
 
     def pieces_in_play(self):
-        return [x.piece for x in self.board.squares \
-            if x.is_occupied()]
+        return [x.piece for x in self.board.squares if x.is_occupied()]
 
     def pieces_by(self, char, color):
         return [x.piece for x in self._find(char, color)]
@@ -136,7 +135,7 @@ class PositionValidation(PieceSelector):
         return False
 
     def is_under_attack(self, piece):
-        return piece.location in self.all_attacks((self.other_color(piece.color)))
+        return piece.location in self.all_attacks(self.other_color(piece.color))
 
 
 class PieceMove(PositionValidation):
@@ -181,8 +180,7 @@ class PieceMove(PositionValidation):
 
     def _get_all_attacks(self, piece):
         moves = self._get_moves(piece)
-        attacks = self._get_pawn_captures(piece) if piece.char == 'P' \
-            else moves
+        attacks = self._get_pawn_captures(piece) if piece.char == 'P' else moves
         all_moves = moves if piece.color == self.to_move else set()
         return [attacks, all_moves]
 
@@ -227,10 +225,10 @@ class PieceMove(PositionValidation):
                     self.is_protected(self.piece_on(move)))
 
             if self.is_legal_castle(piece.color):
-                all_moves.add('g8') if piece.color else all_moves.add('g1')
+                all_moves.add('G8') if piece.color else all_moves.add('G1')
 
             if self.is_legal_castle(piece.color, False):
-                all_moves.add('c8') if piece.color else all_moves.add('c1')
+                all_moves.add('C8') if piece.color else all_moves.add('C1')
 
             return all_moves - enemy_attacks
 
@@ -275,24 +273,60 @@ class PieceMove(PositionValidation):
         del piece
 
     def play_(self, start, end):
-        piece = self.piece_on(start)
-        self.play(piece, end)
+        self.play(self.piece_on(start), end)
 
     def play(self, piece, location):
         self.old_en_passant = str(self.en_passant)
         self.last_position.append(self.save_position())
+
         end, *prom = location.split('=')
-        self.set_en_passant(piece, end)
         self.make_the_move(piece, end)
-        if prom:
-            self.promotion(piece, prom[0])
+        if prom: self.promotion(piece, prom[0])
+
         self._switch_side()
         self.setup()
 
-    def make_the_move(self, piece, location):
+    def simple_move(self, piece, location):
         start = str(piece.location)
         self.board[location] = piece
         self.board[start] = None
+
+    def make_the_move(self, piece, location):
+        self.set_en_passant(piece, location)
+
+        if location.upper() in piece.moves:
+            rook_moves = settings.ROOK_MOVE_ON_CASTLE[location]
+            self.simple_move(self.piece_on(rook_moves[0]), rook_moves[1])
+
+        self.simple_move(piece, location)
+        self.remove_victim_on_en_passant(piece, location)
+        self.disable_castles(piece)
+
+    def disable_castles(self, piece):
+        if piece.color:
+            castles = 'kq'
+            rank = 8
+        else:
+            castles = 'KQ'
+            rank = 1
+
+        if self.castles == '-' or castles not in self.castles: return
+
+        if piece.char == 'K':
+            self.castles = self.castles.replace(castles[0], '')
+            self.castles = self.castles.replace(castles[1], '')
+
+        rook_locations = ['h' + str(rank), 'a' + str(rank)]
+
+        if piece.old_location == rook_locations[0] or piece.location == rook_locations[0]:
+            self.castles = self.castles.replace(castles[0], '')
+
+        if piece.old_location == rook_locations[1] or piece.location == rook_locations[1]:
+            self.castles = self.castles.replace(castles[1], '')
+
+        if not self.castles: self.castles = '-'
+
+    def remove_victim_on_en_passant(self, piece, location):
         if location == self.old_en_passant and piece.char == 'P':
             row = 4 if piece.color else 5
             self.board['{}{}'.format(self.old_en_passant[0], row)] = None

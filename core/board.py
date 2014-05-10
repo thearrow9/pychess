@@ -30,6 +30,7 @@ class Board():
     def __setitem__(self, notation, item):
         self[notation].piece = item
         if item is not None:
+            item.old_location = str(item.location)
             item.location = notation
 
     def _arrange_pieces(self, fen):

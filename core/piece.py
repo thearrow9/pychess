@@ -5,6 +5,7 @@ class Piece:
         self.color = color
         self.location = location
         self.moves = self.attacks = self.protects = self.captures = set()
+        self.old_location = ''
 
         if self.char == 'P' and self.color == 1:
             self.directions = [[-1 * y[0], -1 * y[1]] for y in self.directions]

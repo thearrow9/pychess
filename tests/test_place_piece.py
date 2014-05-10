@@ -57,11 +57,23 @@ class PlacePieceTest(unittest.TestCase):
         self.game.play(self.pa2, 'a1=Q')
         self.assertEqual('q', self.game.piece_on('a1').code)
 
-    def test_castle(self):
+    def test_castle_move(self):
         self.game.parse_fen('8/8/k7/8/8/8/8/R3K2R w KQ - 10 20')
-        white_king = self.game.piece_on('e1')
-        self.assertSetEqual({'d1', 'd2', 'e2', 'f2', 'f1', 'g1', 'c1'},
-            white_king.moves)
+        self.game.play_('e1', 'g1')
+        self.assertEqual('8/8/k7/8/8/8/8/R4RK1',
+            self.game._encode_pieces())
+
+    def test_king_move_disable_castle(self):
+        self.game.parse_fen('8/8/k7/8/8/8/8/R3K2R w KQ - 10 20')
+        self.game.play_('e1', 'e2')
+        self.assertTrue(self.game.save_position().startswith(
+            '8/8/k7/8/8/8/4K3/R6R b - '))
+
+    def test_rook_move_disable_castle(self):
+        self.game.parse_fen('8/8/k7/8/8/8/8/R3K2R w KQ - 10 20')
+        self.game.play_('a1', 'a3')
+        self.assertTrue(self.game.save_position().startswith(
+            '8/8/k7/8/8/R7/8/4K2R b K '))
 
 
 if __name__ == '__main__':

@@ -2,7 +2,8 @@ from piece import Piece
 
 BOARD_SIZE = 8
 Y_LABELS = 'abcdefgh'
-FIRST_ORD, LAST_ORD = ord(Y_LABELS[0]), ord(Y_LABELS[-1])
+
+ROOK_MOVE_ON_CASTLE = {'g1': ['h1', 'f1'], 'c1': ['a1', 'd1'], 'g8': ['h8', 'f8'], 'c8': ['a8', 'd8']}
 
 ROOK_DIR = [[-1, 0], [1, 0], [0, 1], [0, -1]]
 BISHOP_DIR = [[1, 1], [1, -1], [-1, -1], [-1, 1]]
@@ -21,7 +22,7 @@ PIECES = {'K': dict(label='King', points=1000, long_move=False,
                directions=ROOK_DIR),
           'B': dict(label='Bishop', points=3, long_move=True,
                directions=BISHOP_DIR),
-          'N': dict(label='Knight', points=2, long_move=False,
+          'N': dict(label='Knight', points=2.7, long_move=False,
                directions=KNIGHT_DIR),
           'P': dict(label='Pawn', points=1, long_move=False,
                directions=PAWN_DIR)
