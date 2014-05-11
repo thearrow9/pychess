@@ -8,17 +8,18 @@ import errors
 class GameBase:
     def __init__(self):
         self.board = board.Board()
+        self.clear_history()
 
     def parse_fen(self, fen):
         if not Validation.is_fen(fen):
             raise errors.InputError(
                 'Position requires two kings and no more than 8 pawns for each side')
 
-        self.fen, to_move, self.castles, self.en_passant, self.halfmoves, \
+        self.fen, to_move, self.castles, self.en_passant, self.half_moves, \
             self.num_moves = fen.split(' ')
         self.num_moves = int(self.num_moves)
+        self.half_moves = int(self.half_moves)
         self.board._arrange_pieces(self.fen)
-        self.last_position = []
         self.to_move = 0 if to_move == 'w' else 1
         self.setup()
 
@@ -26,10 +27,8 @@ class GameBase:
         return 1 - color
 
     def _switch_side(self):
+        if self.to_move: self.num_moves += 1
         self.to_move = self.other_color(self.to_move)
-        #TODO move No. adjustment
-        #if self.to_move:
-        #    self.num_moves += 1
 
     def _encode_pieces(self):
         fen = ''
@@ -288,6 +287,7 @@ class PieceMove(PositionValidation):
 
     def simple_move(self, piece, location):
         start = str(piece.location)
+
         self.board[location] = piece
         self.board[start] = None
 
@@ -297,6 +297,9 @@ class PieceMove(PositionValidation):
         if location.upper() in piece.moves:
             rook_moves = settings.ROOK_MOVE_ON_CASTLE[location]
             self.simple_move(self.piece_on(rook_moves[0]), rook_moves[1])
+
+        self.half_moves = 0 if self.board[location].is_occupied() \
+            or piece.char == 'P' else self.half_moves + 1
 
         self.simple_move(piece, location)
         self.remove_victim_on_en_passant(piece, location)
@@ -334,13 +337,16 @@ class PieceMove(PositionValidation):
     def save_position(self):
         return '{} {} {} {} {} {}'.format(
             self._encode_pieces(), Notation.side_to_char(self.to_move),
-            self.castles, self.en_passant, self.halfmoves, self.num_moves)
+            self.castles, self.en_passant, self.half_moves, self.num_moves)
 
 
 class Game(PieceMove):
     def __init__(self, fen=settings.START_POS_FEN):
         super().__init__()
         self.parse_fen(fen)
+
+    def clear_history(self):
+        self.last_position = []
 
     def __repr__(self):
         return 'Position: {}'.format(

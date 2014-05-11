@@ -4,3 +4,6 @@ class Error(Exception):
 class InputError(Error):
     def __init__(self, message):
         self.message = message
+
+class MoveError(InputError):
+    pass

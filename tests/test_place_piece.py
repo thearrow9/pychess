@@ -75,6 +75,29 @@ class PlacePieceTest(unittest.TestCase):
         self.assertTrue(self.game.save_position().startswith(
             '8/8/k7/8/8/R7/8/4K2R b K '))
 
+    def test_play_opening(self):
+        self.game = game.Game()
+        self.game.play_('e2', 'e4')
+        self.assertEqual('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+            self.game.save_position())
+        self.game.play_('c7', 'c5')
+        self.assertEqual('rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2',
+            self.game.save_position())
+        self.game.play_('g1', 'f3')
+        self.assertEqual('rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+            self.game.save_position())
+
+    def test_play_and_undo_twice(self):
+        self.game = game.Game()
+        self.game.play_('e2', 'e4')
+        self.game.play_('c7', 'c5')
+        self.game.play_('g1', 'f3')
+        self.game._undo_last_move()
+        self.game._undo_last_move()
+        self.assertEqual('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+            self.game.save_position())
+
+
 
 if __name__ == '__main__':
     unittest.main()
