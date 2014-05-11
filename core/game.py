@@ -348,6 +348,30 @@ class Game(PieceMove):
     def clear_history(self):
         self.last_position = []
 
+    def is_stalemate(self):
+        return not len(self.moves_by_color(self.to_move))
+
+    def is_checkmate(self):
+        king = self.first_piece(['K'], self.to_move)
+        return self.is_stalemate() and self.is_under_attack(king)
+
+    def is_fifty_move_draw(self):
+        return self.half_moves >= 50
+
+    def is_treefold_draw(self):
+        positions = [''.join(x.split(' ')[:-2]) for x in self.last_position]
+        return any(positions.count(x) >= 3 for x in set(positions))
+
+    def is_theoretical_draw(self):
+        pieces = self.pieces_in_play()
+        total_points = sum(piece.points for piece in pieces)
+        return len(pieces) == 2 or (
+            len(pieces) == 3 and 2001 < total_points <= 2003)
+
+    def is_draw(self):
+        return self.is_stalemate() or self.is_theoretical_draw() or \
+            self.is_treefold_draw() or self.is_fifty_move_draw()
+
     def __repr__(self):
         return 'Position: {}'.format(
             ', '.join([str(x) for x in self.pieces_in_play()]))

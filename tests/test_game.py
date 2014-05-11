@@ -24,13 +24,13 @@ class GameTest(unittest.TestCase):
     def test_pieces_by_color(self):
         self.assertEqual('a7', self.black[0].location)
 
-    def test_len_pieces_by_color(self):
+    def test_count_pieces_by_color(self):
         self.assertEqual(16, len(self.black))
 
-    def test_count_pieces_by(self):
+    def test_count_white_queens(self):
         self.assertEqual(1, len(self.game.pieces_by(['Q'], 1)))
 
-    def test_pieces_in_play(self):
+    def test_count_pieces_in_play(self):
         self.assertEqual(32, len(self.game.pieces_in_play()))
 
     def test_get_first(self):
