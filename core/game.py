@@ -8,12 +8,13 @@ import errors
 class GameBase:
     def __init__(self):
         self.board = board.Board()
+        self.analyse_board = board.Board()
         self.clear_history()
+        self.rounder = EvalHelper.round_two_digits
 
     def parse_fen(self, fen):
         if not Validation.is_fen(fen):
-            raise errors.InputError(
-                'Position requires two kings and no more than 8 pawns for each side')
+            raise errors.InputError('This FEN code is invalid')
 
         self.fen, to_move, self.castles, self.en_passant, self.half_moves, \
             self.num_moves = fen.split(' ')
@@ -26,9 +27,10 @@ class GameBase:
     def other_color(self, color):
         return 1 - color
 
-    def _switch_side(self):
+    def switch_side(self):
         if self.to_move: self.num_moves += 1
         self.to_move = self.other_color(self.to_move)
+        self.setup()
 
     def _encode_pieces(self):
         fen = ''
@@ -50,10 +52,86 @@ class GameBase:
         return fen[:-1]
 
 
-class PieceSelector(GameBase):
-    def __init__(self):
-        super().__init__()
+class EvalHelper:
+    @staticmethod
+    def sum_points(pieces):
+        return sum(piece.strength for piece in pieces)
 
+    @staticmethod
+    def sum_king_area_attacks(area, pieces):
+        attackers = set(piece for piece in pieces if area & piece.moves)
+        return len(attackers) * sum(piece.strength for piece in attackers)
+
+    @staticmethod
+    def sum_activity(pieces):
+        return sum(piece.strength * len(piece.moves) for piece in pieces)
+
+    @staticmethod
+    def round_two_digits(number):
+        return float('{0:.2f}'.format(number))
+
+
+class GameEval(GameBase):
+    def list_moves(self):
+        return set(piece.location + moves for piece in \
+            self.pieces_by_color(self.to_move) for moves in piece.moves)
+
+    def eval_material(self, white, black):
+        whites_points = EvalHelper.sum_points(white)
+        blacks_points = EvalHelper.sum_points(black)
+        return self.rounder(whites_points - blacks_points)
+
+    def eval_piece_activity(self, white, black):
+        to_move = int(self.to_move)
+        if to_move == 1: self.switch_side()
+        whites_activity = EvalHelper.sum_activity(white)
+        self.switch_side()
+        blacks_activity = EvalHelper.sum_activity(black)
+        self.to_move = to_move
+        return self.rounder(whites_activity - blacks_activity)
+
+    def eval_pawn_structure(self):
+        #descrease double and isolated pawns
+        #increase passed pawns
+        pass
+
+    def eval_kings_position(self, white, black):
+        white_king = self.first_piece(['K'], 0)
+        black_king = self.first_piece(['K'], 1)
+
+        white_king_pts = EvalHelper.sum_king_area_attacks(
+            white_king.attacks, white) - EvalHelper.sum_king_area_attacks(
+            white_king.attacks, black)
+
+        black_king_pts = EvalHelper.sum_king_area_attacks(
+            black_king.attacks, black) - EvalHelper.sum_king_area_attacks(
+            black_king.attacks, black)
+
+        #TODO more precise evaluation
+
+        return self.rounder(white_king_pts - black_king_pts)
+
+    def eval_position(self):
+        if self.is_checkmate():
+            return (self.to_move * 2 - 1) * 1000
+        if self.is_draw(): return 0
+        white = self.pieces_by_color(0)
+        black = self.pieces_by_color(1)
+
+        evaluation = 0
+        evaluation += self.eval_kings_position(white, black)
+        evaluation += self.eval_piece_activity(white, black) / 10
+        evaluation += self.eval_material(white, black)
+
+
+        return evaluation
+
+    def eval_moves(self, max_depth = 3):
+
+        pass
+
+
+class PieceSelector(GameEval):
     def piece_on(self, notation):
         return self.board[notation].piece
 
@@ -92,9 +170,6 @@ class PieceSelector(GameBase):
 
 
 class PositionValidation(PieceSelector):
-    def __init__(self):
-        super().__init__()
-
     def is_valid_position(self):
         return self.are_kings_legally_placed()
 
@@ -138,9 +213,6 @@ class PositionValidation(PieceSelector):
 
 
 class PieceMove(PositionValidation):
-    def __init__(self):
-        super().__init__()
-
     def all_attacks(self, color):
         squares = set()
         pieces = self.pieces_by_color(color)
@@ -155,7 +227,7 @@ class PieceMove(PositionValidation):
         self.board[pawn.location] = new_piece
         return True
 
-    def _undo_last_move(self):
+    def undo_last_move(self):
         if not len(self.last_position): return False
         last_position = self.last_position.pop()
         self.parse_fen(last_position)
@@ -271,19 +343,16 @@ class PieceMove(PositionValidation):
         self.board[piece.location] = None
         del piece
 
-    def play_(self, start, end):
-        self.play(self.piece_on(start), end)
-
-    def play(self, piece, location):
+    def play(self, start, end):
+        piece = self.piece_on(start)
         self.old_en_passant = str(self.en_passant)
         self.last_position.append(self.save_position())
 
-        end, *prom = location.split('=')
+        end, *prom = end.split('=')
         self.make_the_move(piece, end)
         if prom: self.promotion(piece, prom[0])
 
-        self._switch_side()
-        self.setup()
+        self.switch_side()
 
     def simple_move(self, piece, location):
         start = str(piece.location)

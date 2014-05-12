@@ -30,7 +30,7 @@ class PieceMoveTest(unittest.TestCase):
         self.assertSetEqual({'f6', 'g4', 'h4'}, self.king_g5.moves)
 
     def test_pb7_moves(self):
-        self.game._switch_side()
+        self.game.switch_side()
         self.game.setup()
         self.assertSetEqual({'b6', 'b5'}, self.pawn_b7.moves)
 

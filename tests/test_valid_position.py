@@ -16,21 +16,21 @@ class ValidPositionTest(unittest.TestCase):
         self.assertTrue(self.validate())
 
     def test_black_to_move(self):
-        self.game._switch_side()
+        self.game.switch_side()
         self.assertFalse(self.validate())
 
     def test_white_plays_illegal_move(self):
-        self.game.play(self.wk, 'd4')
+        self.game.play(self.wk.location, 'd4')
         self.assertFalse(self.validate())
 
     def test_white_takes_protected_piece(self):
-        self.game.play(self.wk, 'e5')
+        self.game.play(self.wk.location, 'e5')
         self.assertFalse(self.validate())
 
     def test_kings_next_to_each_other(self):
         self.game.parse_fen('8/8/8/8/8/8/8/Kkr5 w - - 0 1')
         self.assertFalse(self.validate())
-        self.game._switch_side()
+        self.game.switch_side()
         self.assertFalse(self.validate())
 
     def test_king_is_missing(self):

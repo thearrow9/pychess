@@ -37,7 +37,7 @@ class LegalMovesTest(unittest.TestCase):
         self.assertFalse(self.game.are_kings_legally_placed())
 
     def test_enemy_king_under_attack(self):
-        self.game._switch_side()
+        self.game.switch_side()
         self.assertFalse(self.game.are_kings_legally_placed())
 
 

@@ -15,17 +15,17 @@ KING_DIR = BISHOP_DIR + ROOK_DIR
 START_POS_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
 PIECES = {'K': dict(label='King', points=1000, long_move=False,
-               directions=KING_DIR),
+               directions=KING_DIR, strength=2),
           'Q': dict(label='Queen', points=9, long_move=True,
-               directions=KING_DIR),
+               directions=KING_DIR, strength=9),
           'R': dict(label='Rook', points=5, long_move=True,
-               directions=ROOK_DIR),
+               directions=ROOK_DIR, strength=5),
           'B': dict(label='Bishop', points=3, long_move=True,
-               directions=BISHOP_DIR),
+               directions=BISHOP_DIR, strength=3),
           'N': dict(label='Knight', points=2.7, long_move=False,
-               directions=KNIGHT_DIR),
+               directions=KNIGHT_DIR, strength=2.7),
           'P': dict(label='Pawn', points=1, long_move=False,
-               directions=PAWN_DIR)
+               directions=PAWN_DIR, strength=1)
          }
 
 CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
