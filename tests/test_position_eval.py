@@ -57,7 +57,6 @@ class PositionEvalTest(unittest.TestCase):
         self.game.parse_fen('kNK5/8/8/8/8/8/8/8 w - - 20 100')
         self.assertEqual(0, self.game.eval_position())
 
-    @unittest.skip('not ready')
     def test_evalutate_init_position(self):
         self.assertEqual({}, self.game.evaluate())
 

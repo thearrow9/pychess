@@ -3,6 +3,7 @@ import board
 from notation import Notation
 from piece import Piece
 from validation import Validation
+from eval_line import EvalLine
 import errors
 
 class GameBase:
@@ -123,24 +124,58 @@ class GameEval(GameBase):
         evaluation += self.eval_material(white, black)
         #evaluation += self.eval_pawn_structure(white, black)
 
+        self.setup()
         return self.rounder(evaluation)
 
     def evaluate(self, depth = 3):
         VariationEval.set_position(self.save_position())
-        return VariationEval.evaluate(depth)
+        all_nodes = [EvalLine(node) for node in VariationEval.evaluate(depth)]
+        is_reverse = bool(1 - self.to_move)
+        return sorted(all_nodes, key=lambda x: x.evaluation, reverse=is_reverse)
 
 class VariationEval:
     @classmethod
     def set_position(self, fen):
         self.game = Game(fen)
         self.start_fen = fen
-        self.moves = self.game.list_moves()
+        self.nodes = list(self.game.list_moves())
 
     @classmethod
-    def evaluate(self, max_depth = 3):
-        vals = []
-        for node in self.moves:
-            pass
+    def evaluate(self, max_depth):
+        for i, node in enumerate(list(self.nodes)):
+            self.nodes[i] += self.play_node(node, max_depth)
+            self.game.parse_fen(self.start_fen)
+            self.game.clear_history()
+        return self.nodes
+
+    @classmethod
+    def play_node(self, node, max_depth, moves=''):
+        self.game.play(*node.split('-'))
+        if self.game.is_game_over() or not max_depth:
+            return moves + ' ' + str(self.game.eval_position())
+        evals = {}
+        for move in self.game.list_moves():
+            self.game.play(*move.split('-'))
+            evals.update({move: self.game.eval_position()})
+            self.game.undo_last_move()
+        method = min if self.game.to_move else max
+        best_val = method(evals.values())
+        best_move = next(k for k, v in evals.items() if v == best_val)
+        return self.play_node(best_move, max_depth - 1, moves + ' ' + best_move)
+
+                #print(node, 'no game over')
+                #nodes[i] += best_move
+                #if x == max_depth - 1:
+                #    nodes[i] += str(best_val)
+                #else:
+                #    self.game.play(*best_move.split('-'))
+
+                #print(self.game, best_val, nodes[i], len(nodes[i]))
+
+
+            #self.game.parse_fen(self.start_fen)
+
+
             #FIXME vals.append(node)
             #start, end = node.split('-')
             #self.game.play(start, end)
@@ -158,7 +193,6 @@ class VariationEval:
             #    best_move = next(k for k, v in evals.items() if v == best_val)
             #    vals[-1] += best_move
             #vals[-1] += str(best_val)
-        return vals
 
 
 class PieceSelector(GameEval):
@@ -452,7 +486,7 @@ class Game(PieceMove):
         return self.has_no_moves() and not self.is_under_attack(king)
 
     def has_no_moves(self):
-        return not len(self.moves_by_color(self.to_move))
+        return not len(self.list_moves())
 
     def is_checkmate(self):
         king = self.first_piece(['K'], self.to_move)
@@ -472,9 +506,9 @@ class Game(PieceMove):
             len(pieces) == 3 and 2001 < total_points <= 2003)
 
     def is_draw(self):
-        return not self.is_checkmate() and self.is_stalemate() or \
-            self.is_impossible_to_checkmate() or self.is_treefold_draw() or \
-            self.is_fifty_move_draw()
+        if self.is_checkmate(): return False
+        return self.is_stalemate() or self.is_impossible_to_checkmate() \
+            or self.is_treefold_draw() or self.is_fifty_move_draw()
 
     def is_game_over(self):
         return self.is_draw() or self.is_checkmate()
