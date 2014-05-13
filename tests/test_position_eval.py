@@ -14,11 +14,12 @@ class PositionEvalTest(unittest.TestCase):
         self.game.play('f2', 'e1')
         self.game.play('h1', 'h2')
         self.game.play('e1', 'f2')
-        self.assertEqual({'h2h1', 'h2h3'}, self.game.list_moves())
+        self.assertEqual({'h2-h1', 'h2-h3'}, self.game.list_moves())
 
     def test_eval_material(self):
         self.assertEqual(9, self.game.eval_material(self.white, self.black))
 
+    @unittest.skip('not yet')
     def test_pawn_structure(self):
         pass
 
@@ -27,7 +28,7 @@ class PositionEvalTest(unittest.TestCase):
             self.white, self.black))
 
     def test_eval_position(self):
-        self.assertEqual(51.2, self.game.eval_position())
+        self.assertTrue(50 > self.game.eval_position() > 10)
 
     def test_eval_king_position(self):
         self.assertEqual(22, self.game.eval_kings_position(
@@ -37,6 +38,10 @@ class PositionEvalTest(unittest.TestCase):
         self.game.parse_fen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
         white, black = self.game.pieces_by_color(0), self.game.pieces_by_color(1)
         self.assertEqual(0, self.game.eval_position())
+
+    def test_eval_sicilian_defence(self):
+        self.game.parse_fen('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1')
+        self.assertTrue(0.5 > self.game.eval_position() > 0)
 
     def test_eval_checkmate(self):
         self.game.parse_fen('7K/q7/7k/8/8/8/8/8 b - - 10 39')
@@ -51,6 +56,10 @@ class PositionEvalTest(unittest.TestCase):
     def test_draw_position(self):
         self.game.parse_fen('kNK5/8/8/8/8/8/8/8 w - - 20 100')
         self.assertEqual(0, self.game.eval_position())
+
+    @unittest.skip('not ready')
+    def test_evalutate_init_position(self):
+        self.assertEqual({}, self.game.evaluate())
 
     @unittest.skip('not ready')
     def test_mate_in_one(self):

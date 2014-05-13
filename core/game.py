@@ -73,7 +73,7 @@ class EvalHelper:
 
 class GameEval(GameBase):
     def list_moves(self):
-        return set(piece.location + moves for piece in \
+        return set('{}-{}'.format(piece.location,  moves) for piece in \
             self.pieces_by_color(self.to_move) for moves in piece.moves)
 
     def eval_material(self, white, black):
@@ -112,23 +112,53 @@ class GameEval(GameBase):
         return self.rounder(white_king_pts - black_king_pts)
 
     def eval_position(self):
-        if self.is_checkmate():
-            return (self.to_move * 2 - 1) * 1000
+        if self.is_checkmate(): return (self.to_move * 2 - 1) * 1000
         if self.is_draw(): return 0
         white = self.pieces_by_color(0)
         black = self.pieces_by_color(1)
 
         evaluation = 0
         evaluation += self.eval_kings_position(white, black)
-        evaluation += self.eval_piece_activity(white, black) / 10
+        evaluation += self.eval_piece_activity(white, black) / 200
         evaluation += self.eval_material(white, black)
+        #evaluation += self.eval_pawn_structure(white, black)
 
+        return self.rounder(evaluation)
 
-        return evaluation
+    def evaluate(self, depth = 3):
+        VariationEval.set_position(self.save_position())
+        return VariationEval.evaluate(depth)
 
-    def eval_moves(self, max_depth = 3):
+class VariationEval:
+    @classmethod
+    def set_position(self, fen):
+        self.game = Game(fen)
+        self.start_fen = fen
+        self.moves = self.game.list_moves()
 
-        pass
+    @classmethod
+    def evaluate(self, max_depth = 3):
+        vals = []
+        for node in self.moves:
+            pass
+            #FIXME vals.append(node)
+            #start, end = node.split('-')
+            #self.game.play(start, end)
+            #for x in range(max_depth):
+            #    if not len(self.game.list_moves()):
+            #        vals[-1] += str(self.game.eval_position())
+            #        break
+            #    evals = {}
+            #    for move in self.game.list_moves():
+            #        start, end = move.split('-')
+            #        self.game.play(start, end)
+            #        evals.update({move: self.game.eval_position()})
+            #    method = min if self.game.to_move else max
+            #    best_val = method(evals.values())
+            #    best_move = next(k for k, v in evals.items() if v == best_val)
+            #    vals[-1] += best_move
+            #vals[-1] += str(best_val)
+        return vals
 
 
 class PieceSelector(GameEval):
@@ -418,11 +448,15 @@ class Game(PieceMove):
         self.last_position = []
 
     def is_stalemate(self):
+        king = self.first_piece(['K'], self.to_move)
+        return self.has_no_moves() and not self.is_under_attack(king)
+
+    def has_no_moves(self):
         return not len(self.moves_by_color(self.to_move))
 
     def is_checkmate(self):
         king = self.first_piece(['K'], self.to_move)
-        return self.is_stalemate() and self.is_under_attack(king)
+        return self.has_no_moves() and self.is_under_attack(king)
 
     def is_fifty_move_draw(self):
         return self.half_moves >= 50
@@ -431,15 +465,19 @@ class Game(PieceMove):
         positions = [''.join(x.split(' ')[:-2]) for x in self.last_position]
         return any(positions.count(x) >= 3 for x in set(positions))
 
-    def is_theoretical_draw(self):
+    def is_impossible_to_checkmate(self):
         pieces = self.pieces_in_play()
         total_points = sum(piece.points for piece in pieces)
         return len(pieces) == 2 or (
             len(pieces) == 3 and 2001 < total_points <= 2003)
 
     def is_draw(self):
-        return self.is_stalemate() or self.is_theoretical_draw() or \
-            self.is_treefold_draw() or self.is_fifty_move_draw()
+        return not self.is_checkmate() and self.is_stalemate() or \
+            self.is_impossible_to_checkmate() or self.is_treefold_draw() or \
+            self.is_fifty_move_draw()
+
+    def is_game_over(self):
+        return self.is_draw() or self.is_checkmate()
 
     def __repr__(self):
         return 'Position: {}'.format(

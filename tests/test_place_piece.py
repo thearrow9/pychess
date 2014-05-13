@@ -30,13 +30,13 @@ class PlacePieceTest(unittest.TestCase):
         self.assertTrue('c4' in piece_locations and \
             'd5' not in piece_locations)
 
-    def test_move_white_king_andundo(self):
+    def test_move_white_king_and_undo(self):
         self.game.play(self.wk.location, 'c6')
         self.game.undo_last_move()
         self.assertEqual(
             '8/8/8/3Kq3/2p2k2/8/pP6/8', self.game._encode_pieces())
 
-    def test_capture_andundo_it(self):
+    def test_capture_and_undo_it(self):
         self.game.play(self.wk.location, 'c4')
         self.assertTrue(self.game.undo_last_move())
         self.assertEqual(

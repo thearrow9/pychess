@@ -14,6 +14,7 @@ class GameResultTest(unittest.TestCase):
     def test_checkmate(self):
         self.game.switch_side()
         self.game.play('f2', 'g2')
+        self.assertFalse(self.game.is_draw())
         self.assertTrue(self.game.is_checkmate())
 
     def test_50_move_rule_draw(self):
@@ -46,11 +47,11 @@ class GameResultTest(unittest.TestCase):
 
     def test_two_kings(self):
         self.game.parse_fen('8/8/8/8/8/8/8/K2k4 w - - 12 92')
-        self.assertTrue(self.game.is_theoretical_draw())
+        self.assertTrue(self.game.is_impossible_to_checkmate())
 
-    def test_theoretical_draw(self):
+    def test_impossible_to_checkmate(self):
         self.game.parse_fen('8/8/8/8/8/8/8/KNk5 w - - 12 92')
-        self.assertTrue(self.game.is_theoretical_draw())
+        self.assertTrue(self.game.is_impossible_to_checkmate())
 
 
 if __name__ == '__main__':
