@@ -43,8 +43,7 @@ class PlacePieceTest(unittest.TestCase):
             '8/8/8/3Kq3/2p2k2/8/pP6/8', self.game._encode_pieces())
 
     def test_illegal_move(self):
-        self.game.play(self.wk.location, 'd6')
-        self.assertFalse(self.game.is_valid_position())
+        self.assertFalse(self.game.play(self.wk.location, 'd6'))
 
     def test_en_passant_move(self):
         self.game.parse_fen('8/8/8/8/p6k/K7/1P6/8 w - - 0 1')
@@ -59,7 +58,7 @@ class PlacePieceTest(unittest.TestCase):
 
     def test_castle_move(self):
         self.game.parse_fen('8/8/k7/8/8/8/8/R3K2R w KQ - 10 20')
-        self.game.play('e1', 'g1')
+        self.game.play('e1', 'G1')
         self.assertEqual('8/8/k7/8/8/8/8/R4RK1',
             self.game._encode_pieces())
 

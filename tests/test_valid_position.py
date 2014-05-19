@@ -20,12 +20,11 @@ class ValidPositionTest(unittest.TestCase):
         self.assertFalse(self.validate())
 
     def test_white_plays_illegal_move(self):
-        self.game.play(self.wk.location, 'd4')
-        self.assertFalse(self.validate())
+        self.assertFalse(self.game.play(self.wk.location, 'd4'))
 
-    def test_white_takes_protected_piece(self):
-        self.game.play(self.wk.location, 'e5')
-        self.assertFalse(self.validate())
+    def test_white_king_takes_protected_piece(self):
+        self.assertFalse(self.game.play(
+            self.wk.location, 'e5'))
 
     def test_kings_next_to_each_other(self):
         self.game.parse_fen('8/8/8/8/8/8/8/Kkr5 w - - 0 1')
@@ -34,8 +33,8 @@ class ValidPositionTest(unittest.TestCase):
         self.assertFalse(self.validate())
 
     def test_king_is_missing(self):
-        with self.assertRaises(errors.InputError):
-            self.game.parse_fen('8/8/8/8/8/8/8/KQ6 w - - 0 1')
+        self.assertFalse(self.game.parse_fen(
+            '8/8/8/8/8/8/8/KQ6 w - - 0 1'))
 
 
 if __name__ == '__main__':

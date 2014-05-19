@@ -15,7 +15,8 @@ class GameBase:
 
     def parse_fen(self, fen):
         if not Validation.is_fen(fen):
-            raise errors.InputError('This FEN code is invalid')
+            print(settings.MSG['invalid_fen'])
+            return False
 
         self.fen, to_move, self.castles, self.en_passant, self.half_moves, \
             self.num_moves = fen.split(' ')
@@ -119,8 +120,8 @@ class GameEval(GameBase):
         black = self.pieces_by_color(1)
 
         evaluation = 0
-        evaluation += self.eval_kings_position(white, black)
-        evaluation += self.eval_piece_activity(white, black) / 200
+        evaluation += self.eval_kings_position(white, black) / 20
+        evaluation += self.eval_piece_activity(white, black) / 300
         evaluation += self.eval_material(white, black)
         #evaluation += self.eval_pawn_structure(white, black)
 
@@ -131,7 +132,7 @@ class GameEval(GameBase):
         VariationEval.set_position(self.save_position())
         all_nodes = [EvalLine(node) for node in VariationEval.evaluate(depth)]
         is_reverse = bool(1 - self.to_move)
-        return sorted(all_nodes, key=lambda x: x.evaluation, reverse=is_reverse)
+        return sorted(all_nodes, key=lambda x: (x.evaluation), reverse=is_reverse)
 
 class VariationEval:
     @classmethod
@@ -139,15 +140,18 @@ class VariationEval:
         self.game = Game(fen)
         self.start_fen = fen
         self.nodes = list(self.game.list_moves())
+        self.report = set()
 
     @classmethod
     def evaluate(self, max_depth):
         for i, node in enumerate(list(self.nodes)):
             self.nodes[i] += self.play_node(node, max_depth)
             self.game.parse_fen(self.start_fen)
+            #not sure if i have to remove all history but..
             self.game.clear_history()
         return self.nodes
 
+    #deprecated
     @classmethod
     def play_node(self, node, max_depth, moves=''):
         self.game.play(*node.split('-'))
@@ -163,36 +167,28 @@ class VariationEval:
         best_move = next(k for k, v in evals.items() if v == best_val)
         return self.play_node(best_move, max_depth - 1, moves + ' ' + best_move)
 
-                #print(node, 'no game over')
-                #nodes[i] += best_move
-                #if x == max_depth - 1:
-                #    nodes[i] += str(best_val)
-                #else:
-                #    self.game.play(*best_move.split('-'))
+    @classmethod
+    def best_move(self, depth, path=''):
+        if self.game.is_game_over():
+            self.report.add(path + ' ' + str(self.game.eval_position()))
+            return
+        if depth == 1:
+            evals = {}
+            for move in self.game.list_moves():
+                self.game.play(*move.split('-'))
+                evals.update({move: self.game.eval_position()})
+                self.game.undo_last_move()
+            method = min if self.game.to_move else max
+            best_val = method(evals.values())
+            best_move = next(k for k, v in evals.items() if v == best_val)
+            self.report.add(' ' + path + ' ' + best_move + ' ' + str(best_val))
+            return
 
-                #print(self.game, best_val, nodes[i], len(nodes[i]))
-
-
-            #self.game.parse_fen(self.start_fen)
-
-
-            #FIXME vals.append(node)
-            #start, end = node.split('-')
-            #self.game.play(start, end)
-            #for x in range(max_depth):
-            #    if not len(self.game.list_moves()):
-            #        vals[-1] += str(self.game.eval_position())
-            #        break
-            #    evals = {}
-            #    for move in self.game.list_moves():
-            #        start, end = move.split('-')
-            #        self.game.play(start, end)
-            #        evals.update({move: self.game.eval_position()})
-            #    method = min if self.game.to_move else max
-            #    best_val = method(evals.values())
-            #    best_move = next(k for k, v in evals.items() if v == best_val)
-            #    vals[-1] += best_move
-            #vals[-1] += str(best_val)
+        for move in self.game.list_moves():
+            self.game.play(*move.split('-'))
+            self.best_move(depth - 1, path + move)
+            self.game.undo_last_move()
+        return
 
 
 class PieceSelector(GameEval):
@@ -409,11 +405,20 @@ class PieceMove(PositionValidation):
 
     def play(self, start, end):
         piece = self.piece_on(start)
+        if piece is None:
+            print(settings.MSG['no_piece_on_sq'])
+            return False
+        if piece.color != self.to_move:
+            print(settings.MSG['opp_piece'])
+            return False
+        if end not in piece.moves:
+            print(settings.MSG['illegal_move'])
+            return False
         self.old_en_passant = str(self.en_passant)
         self.last_position.append(self.save_position())
 
         end, *prom = end.split('=')
-        self.make_the_move(piece, end)
+        self.make_the_move(piece, end.lower())
         if prom: self.promotion(piece, prom[0])
 
         self.switch_side()
@@ -512,6 +517,41 @@ class Game(PieceMove):
 
     def is_game_over(self):
         return self.is_draw() or self.is_checkmate()
+
+    def set_CPU_params(self, colors, depth):
+        self.cpu = {'color': colors, 'depth': depth}
+
+    #test method
+    def start_game(self, color, depth=2):
+        self.set_CPU_params(color, depth)
+        #self.parse_fen(settings.START_POS_FEN)
+        self.parse_fen('8/8/8/8/8/8/5Q2/5K1k w - - 0 1')
+        while True:
+            if self.is_game_over():
+                if self.is_draw():
+                    msg = 'Draw by '
+                    if self.is_stalemate():
+                        msg += 'stalemate'
+                    elif self.is_treefold_draw():
+                        msg += 'treefold repetition'
+                    else:
+                        msg += '50 move rule'
+                else:
+                    msg = 'White' if self.to_move else 'Black'
+                    msg += ' wins'
+                print('Game over! ' + msg)
+                break
+
+            if self.to_move in self.cpu['color']:
+                print('CPU is calculating...')
+                best_line = self.evaluate(self.cpu['depth'])[0].moves.split(' ')
+                print("...and plays " + best_line[0])
+                self.play(*best_line[0].split('-'))
+            else:
+                print(self)
+                cmd = input("It's your turn \n-> ")
+                self.play(*cmd.split('-'))
+
 
     def __repr__(self):
         return 'Position: {}'.format(

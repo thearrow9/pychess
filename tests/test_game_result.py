@@ -33,11 +33,12 @@ class GameResultTest(unittest.TestCase):
         self.assertFalse(self.game.is_fifty_move_draw())
 
     def test_promote_bishop_having_3_pieces_on_board(self):
-        self.game.parse_fen('8/8/8/8/8/8/p6k/1R5K b - - 20 91')
+        self.game.parse_fen('k7/8/8/8/8/8/p7/1R5K b - - 20 91')
         self.game.play('a2', 'b1=B')
         self.assertTrue(self.game.is_draw())
 
     def test_treefold_repetition_draw(self):
+        self.game.switch_side()
         for x in range(3):
             self.game.play('f2', 'e1')
             self.game.play('h1', 'h2')

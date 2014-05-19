@@ -57,8 +57,21 @@ class PositionEvalTest(unittest.TestCase):
         self.game.parse_fen('kNK5/8/8/8/8/8/8/8 w - - 20 100')
         self.assertEqual(0, self.game.eval_position())
 
+    @unittest.skip('not yet')
+    def test_best_move(self):
+        self.game.parse_fen('8/8/8/8/8/8/p6k/5K2 b - - 10 20')
+        game.VariationEval.set_position(self.game.save_position())
+        game.VariationEval.best_move(3)
+        print(game.VariationEval.report)
+        self.assertEqual('a2-a1=Q', game.VariationEval.report)
+
+
+    @unittest.skip('not ready')
     def test_evalutate_init_position(self):
-        self.assertEqual({}, self.game.evaluate())
+        variations = [x.first_move for x in self.game.evaluate() \
+            if x.evaluation == 1000 and x.depth == 1]
+        self.assertEqual({'f2-g1', 'f2-g2', 'f2-h4'},
+            set(variations))
 
     @unittest.skip('not ready')
     def test_mate_in_one(self):

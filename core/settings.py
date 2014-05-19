@@ -30,3 +30,10 @@ PIECES = {'K': dict(label='King', points=1000, long_move=False,
 
 CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
     for cls, options in PIECES.items())
+
+
+MSG = {'invalid_fen': 'This FEN code is not valid',
+       'no_piece_on_sq': 'There is no piece on this square',
+       'opp_piece': 'Cannot move opponent\'s piece',
+       'illegal_move': 'This move is illegal'
+      }
