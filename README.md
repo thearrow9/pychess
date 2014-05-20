@@ -24,8 +24,8 @@ python 3.4
 $ python3.4 play.py -c, --color=<color> -p, --position <fen> -d, --depth <depth>
 ```
 
-,където:
+, където:
 
-&lt;color&rt; е 0-2 цвята in ('white', 'black')
-&lt;fen&rt; е произволна позиция
-&lt;depth&rt; е дълбочина на смятане на компютъра
+* &lt;color&gt; е 0-2 цвята in ('white', 'black')
+* &lt;fen&gt; е произволна позиция
+* &lt;depth&gt; е дълбочина на смятане на компютъра
