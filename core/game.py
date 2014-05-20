@@ -518,14 +518,14 @@ class Game(PieceMove):
     def is_game_over(self):
         return self.is_draw() or self.is_checkmate()
 
-    def set_CPU_params(self, colors, depth):
+    def set_CPU_params(self, colors, depth=2):
         self.cpu = {'color': colors, 'depth': depth}
 
     #test method
-    def start_game(self, color, depth=2):
+    def start_game(self, color, depth):
         self.set_CPU_params(color, depth)
         #self.parse_fen(settings.START_POS_FEN)
-        self.parse_fen('8/8/8/8/8/8/5Q2/5K1k w - - 0 1')
+        #self.parse_fen('8/8/8/8/8/8/5Q2/5K1k w - - 0 1')
         while True:
             if self.is_game_over():
                 if self.is_draw():
@@ -549,8 +549,11 @@ class Game(PieceMove):
                 self.play(*best_line[0].split('-'))
             else:
                 print(self)
-                cmd = input("It's your turn \n-> ")
-                self.play(*cmd.split('-'))
+                cmd = input(settings.MSG['your_turn'])
+                if Validation.is_move(cmd):
+                    self.play(*cmd.split('-'))
+                else:
+                    print(settings.MSG['invalid_move'])
 
 
     def __repr__(self):

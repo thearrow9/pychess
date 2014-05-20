@@ -5,7 +5,7 @@ class Validation:
     def is_fen(self, fen):
         code, *args = fen.split(' ')
         return bool(re.match(
-            '^({0}\/){{7}}{0} [wb] (-|K?Q?k?q?) (-|[a-h][36]) \d+ \d+'. \
+            '^({0}\/){{7}}{0} [wb] (-|K?Q?k?q?) (-|[a-h][36]) \d+ \d+$'. \
                 format('[rbnqkpRBNQKP1-8]{1,8}'), fen)) \
                     and self.is_code(code)
 
@@ -20,6 +20,10 @@ class Validation:
         #TODO more validations are required
         return counts['K'] == 1 and counts['k'] == 1 and \
             counts['P'] <= 8 and counts['p'] <= 8 and self.correct_rows(code)
+
+    @classmethod
+    def is_move(self, code):
+        return re.match('^{0}-{0}(=[QRBN])?$'.format('[a-h][1-8]'), code)
 
     @classmethod
     def correct_rows(self, code):

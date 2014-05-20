@@ -35,5 +35,7 @@ CHESS_SET = dict((cls, type(cls, (Piece,), options)) \
 MSG = {'invalid_fen': 'This FEN code is not valid',
        'no_piece_on_sq': 'There is no piece on this square',
        'opp_piece': 'Cannot move opponent\'s piece',
+       'invalid_move': 'You mistyped',
+       'your_turn': "It's your turn -> ",
        'illegal_move': 'This move is illegal'
       }
