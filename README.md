@@ -21,7 +21,7 @@ python 3.4
 ## Демо
 
 ```
-$ python3.4 play.py -c, --color=<color> -p, --position <fen> -d, --depth <depth>
+$ python3.4 play.py [-c, --color=<color>] [-p, --position=<fen>] [-d, --depth=<depth>]
 ```
 
 , където:
