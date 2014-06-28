@@ -4,7 +4,6 @@ from engine import Engine
 from notation import Notation
 from piece import Piece
 from validation import Validation
-from eval_line import EvalLine
 import errors
 
 class GameBase:
@@ -12,7 +11,6 @@ class GameBase:
         self.board = board.Board()
         self.analyse_board = board.Board()
         self.clear_history()
-        self.rounder = EvalHelper.round_two_digits
 
     def parse_fen(self, fen):
         if not Validation.is_fen(fen):
@@ -54,128 +52,12 @@ class GameBase:
                 fen += '/'
         return fen[:-1]
 
-
-class EvalHelper:
-    @staticmethod
-    def sum_points(pieces):
-        return sum(piece.strength for piece in pieces)
-
-    @staticmethod
-    def sum_king_area_attacks(area, pieces):
-        attackers = set(piece for piece in pieces if area & piece.moves)
-        return len(attackers) * sum(piece.strength for piece in attackers)
-
-    @staticmethod
-    def sum_activity(pieces):
-        return sum(piece.strength * len(piece.moves) for piece in pieces)
-
-    @staticmethod
-    def round_two_digits(number):
-        return float('{0:.2f}'.format(number))
-
-
-class GameEval(GameBase):
     def list_moves(self):
         return set('{}-{}'.format(piece.location,  moves) for piece in \
             self.pieces_by_color(self.to_move) for moves in piece.moves)
 
-    def eval_material(self, white, black):
-        whites_points = EvalHelper.sum_points(white)
-        blacks_points = EvalHelper.sum_points(black)
-        return self.rounder(whites_points - blacks_points)
 
-    def eval_piece_activity(self, white, black):
-        to_move = int(self.to_move)
-        if to_move == 1: self.switch_side()
-        whites_activity = EvalHelper.sum_activity(white)
-        self.switch_side()
-        blacks_activity = EvalHelper.sum_activity(black)
-        self.to_move = to_move
-        return self.rounder(whites_activity - blacks_activity)
-
-    def eval_pawn_structure(self):
-        #descrease double and isolated pawns
-        #increase passed pawns
-        pass
-
-    def eval_kings_position(self, white, black):
-        white_king = self.first_piece(['K'], 0)
-        black_king = self.first_piece(['K'], 1)
-
-        white_king_pts = EvalHelper.sum_king_area_attacks(
-            white_king.attacks, white) - EvalHelper.sum_king_area_attacks(
-            white_king.attacks, black)
-
-        black_king_pts = EvalHelper.sum_king_area_attacks(
-            black_king.attacks, black) - EvalHelper.sum_king_area_attacks(
-            black_king.attacks, black)
-
-        #TODO more precise evaluation
-
-        return self.rounder(white_king_pts - black_king_pts)
-
-    def eval_position(self):
-        if self.is_checkmate(): return (self.to_move * 2 - 1) * 1000
-        if self.is_draw(): return 0
-        white = self.pieces_by_color(0)
-        black = self.pieces_by_color(1)
-
-        evaluation = 0
-        evaluation += self.eval_kings_position(white, black) / 20
-        evaluation += self.eval_piece_activity(white, black) / 300
-        evaluation += self.eval_material(white, black)
-        #evaluation += self.eval_pawn_structure(white, black)
-
-        self.setup()
-        return self.rounder(evaluation)
-
-    def evaluate(self, depth = 3):
-        VariationEval.set_position(self.save_position())
-        all_nodes = [EvalLine(node) for node in VariationEval.evaluate(depth)]
-        is_reverse = bool(1 - self.to_move)
-        return sorted(all_nodes, key=lambda x: (x.evaluation), reverse=is_reverse)
-
-class VariationEval:
-    @classmethod
-    def set_position(self, fen):
-        self.game = Game(fen)
-        self.start_fen = fen
-        self.nodes = list(self.game.list_moves())
-        self.report = set()
-
-    @classmethod
-    def evaluate(self, max_depth):
-        for i, node in enumerate(list(self.nodes)):
-            self.nodes[i] += self.play_node(node, max_depth)
-            self.game.parse_fen(self.start_fen)
-            self.game.clear_history()
-        return self.nodes
-
-    @classmethod
-    def best_move(self, depth, path=''):
-        if self.game.is_game_over():
-            self.report.add(path + ' ' + str(self.game.eval_position()))
-            return
-        if depth == 1:
-            evals = {}
-            for move in self.game.list_moves():
-                self.game.play(*move.split('-'))
-                evals.update({move: self.game.eval_position()})
-                self.game.undo_last_move()
-            method = min if self.game.to_move else max
-            best_val = method(evals.values())
-            best_move = next(k for k, v in evals.items() if v == best_val)
-            self.report.add(' ' + path + ' ' + best_move + ' ' + str(best_val))
-            return
-
-        for move in self.game.list_moves():
-            self.game.play(*move.split('-'))
-            self.best_move(depth - 1, path + move)
-            self.game.undo_last_move()
-        return
-
-
-class PieceSelector(GameEval):
+class PieceSelector(GameBase):
     def piece_on(self, notation):
         return self.board[notation].piece
 
@@ -502,11 +384,10 @@ class Game(PieceMove):
     def is_game_over(self):
         return self.is_draw() or self.is_checkmate()
 
-    def set_CPU_params(self, colors, strength=2):
+    def set_CPU_params(self, colors, strength):
         self.cpu = {'color': colors, 'strength': strength}
 
-    #test method
-    def start_game(self, color, strength):
+    def start_game(self, color, strength=2):
         self.set_CPU_params(color, strength)
         while True:
             if self.is_game_over():
@@ -516,8 +397,10 @@ class Game(PieceMove):
                         msg += 'stalemate'
                     elif self.is_treefold_draw():
                         msg += 'treefold repetition'
-                    else:
+                    elif self.is_fifty_move_draw():
                         msg += '50 move rule'
+                    else:
+                        msg += 'insufficient material'
                 else:
                     msg = 'White' if self.to_move else 'Black'
                     msg += ' wins'
