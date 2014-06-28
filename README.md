@@ -12,20 +12,29 @@ python 3.4
 * специални ходове (рокада, ан-пасан, произвеждане)
 * проверки дали позицията е реми (пат, трикратно повторение, [правилото за 50 хода](http://en.wikipedia.org/wiki/Fifty-move_rule))
 * елементарни критерии за оценка на позицията
+* Интегриране на third party анализатор (в момента се поддържа само [Stockfish](https://github.com/mcostalba/Stockfish))
 
-## Планирани подобрения по кода
+## Инсталация
 
-* Подобряване на алгоритъма за намиране на най-добър ход (твърде бавен е)
-* Преструктуриране на кода в основния файл
+Ако желаете да играете срещу компютър, първо ще трябва да го инсталирате:
+
+```
+sudo apt-get install git g++
+cd engines/
+git clone https://github.com/mcostalba/Stockfish.git
+cd Stockfish/src
+make profile-build ARCH=x86-64 # или ARCH=x86-32
+```
 
 ## Демо
 
 ```
-$ python3.4 play.py [-c, --color=<color>] [-p, --position=<fen>] [-d, --depth=<depth>]
+$ python3.4 play.py [-c, --color=<color>] [-p, --position=<fen>] [-s, --strength=<strength>]
 ```
 
 , където:
 
-* &lt;color&gt; е 0-2 цвята in ('white', 'black')
+* &lt;color&gt; е цвета фигури, с които играе компютъра (пропуснете ако не желаете опонент) 0-2 цвята in ('white', 'black')
 * &lt;fen&gt; е произволна позиция
-* &lt;depth&gt; е дълбочина на смятане на компютъра
+* &lt;strength&gt; е число от 1 до 20 (20 е непобедим)
+
